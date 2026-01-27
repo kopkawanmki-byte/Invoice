@@ -378,7 +378,7 @@
                                     <label class="form-label fw-bold text-primary"><i class="bi bi-upload me-1"></i> Bukti Transfer / Lampiran (Khusus SO)</label>
                                     <input type="file" class="form-control" id="proofUpload" accept="image/*">
                                     <div class="form-text text-muted small">
-                                        <i class="bi bi-info-circle-fill text-warning"></i> Jika ada lampiran, status otomatis menjadi <b>LUNAS</b>. Lampiran akan dimasukkan ke halaman kedua PDF.
+                                        <i class="bi bi-info-circle-fill text-warning"></i> Upload lampiran akan mengubah status laporan menjadi <b>LUNAS</b>. Lampiran akan dimasukkan ke halaman kedua PDF.
                                     </div>
                                 </div>
                             </div>
@@ -903,11 +903,10 @@
         });
     }
 
-    // Fungsi Gabungan: Save Transaction + Update Counter + Generate PDF
+    // Fungsi Simpan Data ke Firestore (Tanpa Gambar)
     window.saveAndRecordTransaction = async (status) => {
         const { year, month } = getDateParts();
         
-        // HITUNG TOTAL MKI & TOTAL CUSTOMER DI BELAKANG LAYAR
         let totalMKI = 0;
         let totalCust = 0;
 
@@ -916,7 +915,6 @@
             const select = row.querySelector('.item-sku');
             const option = select.options[select.selectedIndex];
             
-            // Ambil harga dari atribut hidden di option
             const pMKI = parseFloat(option.getAttribute('data-price-mki')) || 0;
             const pCust = parseFloat(option.getAttribute('data-price-cust')) || 0;
             
@@ -941,7 +939,7 @@
 
         const customer = document.getElementById('customerName').value;
         
-        // 1. Simpan Laporan ke Firestore 'transactions' (TANPA GAMBAR)
+        // Simpan data teks ke Firestore (gambar dihapus dari sini)
         const transData = {
             date: document.getElementById('docDate').value,
             type: currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order',
@@ -952,14 +950,13 @@
             totalCust: totalCust,
             ppn: ppn,
             margin: margin,
-            status: status, // Status diterima dari argumen fungsi
+            status: status, 
             docNumber: docNumber, 
             createdAt: new Date().toISOString()
         };
         
         await addDoc(transactionCol, transData);
 
-        // 2. Update Counter
         const invId = `counter_invoice_${year}_${month}`;
         await setDoc(doc(db, countersPath, invId), { 
             lastSequence: window.currentCounters.doc 
@@ -972,10 +969,8 @@
             });
         }
         
-        // Reset File Input
         if (document.getElementById('proofUpload')) document.getElementById('proofUpload').value = '';
 
-        // Refresh nomor
         setTimeout(fetchAllAutoNumbers, 1000);
     }
 
@@ -1056,7 +1051,7 @@
     // LOGIC: UI & FORM INTERACTION (Standard JS)
     // ==========================================
 
-    let currentFormType = 'proforma'; // 'proforma' or 'so'
+    let currentFormType = 'proforma'; 
     let logoBase64 = "";
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1065,7 +1060,6 @@
         addRow(); 
         loadLogoDefault();
         
-        // CHECK LOGIN SESSION
         if(sessionStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('masterLoginPanel').style.display = 'none';
             document.getElementById('masterDataContent').style.display = 'block';
@@ -1078,20 +1072,10 @@
         const p = document.getElementById('inputPass').value;
         
         if (u === 'admin' && p === 'admin123') {
-            // Login Sukses
             document.getElementById('masterLoginPanel').style.display = 'none';
             document.getElementById('masterDataContent').style.display = 'block';
-            
-            // Simpan sesi
             sessionStorage.setItem('isAdminLoggedIn', 'true');
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Login Berhasil',
-                text: 'Selamat datang kembali, Admin.',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            Swal.fire({ icon: 'success', title: 'Login Berhasil', timer: 1500, showConfirmButton: false });
         } else {
             Swal.fire('Gagal', 'Username atau Password salah!', 'error');
         }
@@ -1101,8 +1085,6 @@
         sessionStorage.removeItem('isAdminLoggedIn');
         document.getElementById('masterLoginPanel').style.display = 'flex';
         document.getElementById('masterDataContent').style.display = 'none';
-        
-        // Reset input
         document.getElementById('inputUser').value = '';
         document.getElementById('inputPass').value = '';
     }
@@ -1112,7 +1094,7 @@
     function saveLogoDefault() {
         if (logoBase64) {
             localStorage.setItem('savedLogo', logoBase64);
-            Swal.fire('Tersimpan', 'Logo berhasil disimpan di browser. Tidak perlu upload lagi nanti.', 'success');
+            Swal.fire('Tersimpan', 'Logo berhasil disimpan di browser.', 'success');
         } else {
             Swal.fire('Info', 'Pilih file logo terlebih dahulu.', 'warning');
         }
@@ -1137,35 +1119,41 @@
     }
     // -------------------------
 
+    async function previewLogo(input) {
+        if (input.files && input.files[0]) {
+            try {
+                logoBase64 = await getBase64(input.files[0]); 
+                document.getElementById('logoPreviewBox').innerHTML = `<img src="${logoBase64}" style="max-height: 100%; max-width: 100%;">`;
+                document.getElementById('logoPreviewBox').style.border = "none";
+            } catch (e) {
+                console.error("Gagal memproses logo", e);
+            }
+        }
+    }
+
     function setFormType(type) {
         currentFormType = type;
         const titleEl = document.getElementById('formTitle');
         const refLbl = document.getElementById('lblRefNumber');
         const badge = document.getElementById('priceInfoBadge');
-        const divSoRef = document.getElementById('divSoRef'); // Element Wrapper
-        const divProofUpload = document.getElementById('divProofUpload'); // Upload Area
+        const divSoRef = document.getElementById('divSoRef'); 
+        const divProofUpload = document.getElementById('divProofUpload'); 
         
         if(type === 'proforma') {
             titleEl.innerHTML = '<span class="text-info">Proforma Invoice</span> Generator';
             refLbl.innerText = 'Nomor Invoice';
             badge.className = 'alert alert-info py-1 px-2 d-inline-block small mb-0 mt-2';
             badge.innerHTML = '<i class="bi bi-info-circle"></i> Menggunakan Harga Customer (Proforma)';
-            // Show Ref SO
             if(divSoRef) divSoRef.style.display = 'block';
-            // Hide Upload Bukti (Hanya untuk SO)
             if(divProofUpload) divProofUpload.style.display = 'none';
         } else {
             titleEl.innerHTML = '<span class="text-primary">Surat Order</span> Generator';
             refLbl.innerText = 'Nomor SO';
             badge.className = 'alert alert-primary py-1 px-2 d-inline-block small mb-0 mt-2';
             badge.innerHTML = '<i class="bi bi-info-circle"></i> Menggunakan Harga MKI (Surat Order)';
-            // Hide Ref SO
             if(divSoRef) divSoRef.style.display = 'none';
-            // Show Upload Bukti (Khusus SO)
             if(divProofUpload) divProofUpload.style.display = 'block';
         }
-
-        // Update harga di row yang sudah ada
         updateExistingRowsPrice();
     }
 
@@ -1173,7 +1161,7 @@
         document.querySelectorAll('#transactionBody tr').forEach(row => {
             const selectEl = row.querySelector('.item-sku');
             if(selectEl && selectEl.value) {
-                itemSelected(selectEl); // Re-trigger selection logic to pick correct price
+                itemSelected(selectEl); 
             }
         });
     }
@@ -1184,7 +1172,6 @@
         document.getElementById('masterDesc').value = desc;
         document.getElementById('masterPriceMKI').value = priceMki;
         document.getElementById('masterPriceCust').value = priceCust;
-        
         const modal = new bootstrap.Modal(document.getElementById('masterModal'));
         modal.show();
     }
@@ -1204,7 +1191,6 @@
         let options = '<option value="" disabled selected>Pilih Barang...</option>';
         if (window.localProducts && window.localProducts.length > 0) {
             window.localProducts.forEach(p => {
-                // MODIFIKASI: Hanya menampilkan SKU di opsi dropdown (tanpa deskripsi)
                 options += `<option value="${p.sku}" 
                             data-desc="${p.description}" 
                             data-price-mki="${p.priceMKI}"
@@ -1236,7 +1222,6 @@
             let options = '<option value="" disabled selected>Pilih Barang...</option>';
             if (window.localProducts) {
                 window.localProducts.forEach(p => {
-                    // MODIFIKASI: Hanya menampilkan SKU di opsi dropdown
                     options += `<option value="${p.sku}" 
                                 data-desc="${p.description}" 
                                 data-price-mki="${p.priceMKI}"
@@ -1253,23 +1238,18 @@
     function itemSelected(selectEl) {
         const option = selectEl.options[selectEl.selectedIndex];
         const row = selectEl.closest('tr');
-        
-        // Auto fill Deskripsi
         row.querySelector('.item-desc').value = option.getAttribute('data-desc') || '';
         
-        // Logika Pemilihan Harga
         const priceMKI = parseFloat(option.getAttribute('data-price-mki')) || 0;
         const priceCust = parseFloat(option.getAttribute('data-price-cust')) || 0;
         
         let finalPrice = 0;
         if(currentFormType === 'so') {
-            finalPrice = priceMKI; // Surat Order pakai Harga MKI
+            finalPrice = priceMKI; 
         } else {
-            finalPrice = priceCust; // Proforma pakai Harga Customer
+            finalPrice = priceCust; 
         }
-
         row.querySelector('.item-price').value = finalPrice;
-        
         calcRow(selectEl);
     }
 
@@ -1278,7 +1258,6 @@
         const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const total = qty * price;
-        
         row.querySelector('.item-total').value = formatRp(total);
         calcGrandTotal();
     }
@@ -1301,19 +1280,7 @@
         document.getElementById('grandTotal').innerText = formatRp(grand);
     }
 
-    function previewLogo(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                logoBase64 = e.target.result;
-                document.getElementById('logoPreviewBox').innerHTML = `<img src="${logoBase64}" style="max-height: 100%; max-width: 100%;">`;
-                document.getElementById('logoPreviewBox').style.border = "none";
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    // Fungsi Utama: Rekam Data ke Database & Download PDF
+    // Fungsi Utama: Generate PDF DULUAN, Simpan DB di Background
     async function generateAndSave() {
         const element = document.getElementById('printArea');
         const company = document.getElementById('companyName').value;
@@ -1322,26 +1289,23 @@
             return;
         }
 
-        // Add Loading Text
         const loadingText = document.querySelector('.loading-overlay span');
         if(loadingText) loadingText.innerText = "Memproses Gambar...";
         
         toggleLoading(true);
 
-        // --- 1. PROSES FILE & STATUS ---
         const fileInput = document.getElementById('proofUpload');
         let pdfAttachmentData = null;
-        let paymentStatus = 'Tunggu Bayar'; // Default jika tidak ada lampiran
+        let paymentStatus = 'Tunggu Bayar'; 
 
-        // Jika SO dan ada file, baca file untuk PDF
         if (currentFormType === 'so' && fileInput.files.length > 0) {
             try {
                 const file = fileInput.files[0];
-                if (file.size > 1000000) { // Limit 1MB agar browser tidak crash saat generate PDF
+                if (file.size > 1000000) { 
                     throw new Error('Ukuran file lampiran terlalu besar (Maks 1MB).');
                 }
                 pdfAttachmentData = await getBase64(file);
-                paymentStatus = 'Lunas'; // Status jadi Lunas
+                paymentStatus = 'Lunas'; 
             } catch (error) {
                 toggleLoading(false);
                 Swal.fire('Error File', error.message, 'error');
@@ -1349,8 +1313,15 @@
             }
         }
 
-        // --- 2. SIAPKAN PDF TEMPLATE ---
-        // Logo & Info Dasar
+        // --- 1. SIMPAN DATA KE FIREBASE (BACKGROUND - NO AWAIT) ---
+        // Kita panggil ini agar berjalan di latar belakang
+        window.saveAndRecordTransaction(paymentStatus).then(() => {
+            console.log("Data berhasil disimpan di background");
+        }).catch(err => {
+            console.error("Gagal simpan background:", err);
+        });
+
+        // --- 2. SIAPKAN PDF TEMPLATE & DOWNLOAD (FOREGROUND) ---
         document.getElementById('pdfLogoImg').src = logoBase64 || "";
         document.getElementById('pdfLogoImg').style.display = logoBase64 ? 'block' : 'none';
         document.getElementById('pdfLogoPlaceholder').style.display = logoBase64 ? 'none' : 'block';
@@ -1381,30 +1352,30 @@
         document.getElementById('pdfAddress').innerText = document.getElementById('address').value;
         document.getElementById('pdfGrandTotal').innerText = document.getElementById('grandTotal').innerText;
 
-        // Copy Tabel Barang
         const pdfBody = document.getElementById('pdfTableBody');
         pdfBody.innerHTML = '';
+        
         document.querySelectorAll('#transactionBody tr').forEach(row => {
             const sku = row.querySelector('.item-sku').value;
             const desc = row.querySelector('.item-desc').value;
-            const qty = row.querySelector('.item-qty').value;
-            const price = row.querySelector('.item-price').value;
-            const total = row.querySelector('.item-total').value;
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const priceDisplay = parseFloat(row.querySelector('.item-price').value) || 0;
+            const totalDisplay = row.querySelector('.item-total').value;
+
             if(sku) {
                 const newRow = `
                     <tr>
                         <td style="border: 1px solid #000; padding: 5px;">${sku}</td>
                         <td style="border: 1px solid #000; padding: 5px;">${desc}</td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: center;">${qty}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatRp(price)}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${total}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatRp(priceDisplay)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${totalDisplay}</td>
                     </tr>
                 `;
                 pdfBody.innerHTML += newRow;
             }
         });
 
-        // Footer Info
         let footerInfo = '';
         if(currentFormType === 'so') {
             footerInfo = `<strong>Remarks:</strong><br>- Retail<br>- Incoterm FOT<br>- Exclude Tax`;
@@ -1413,7 +1384,6 @@
         }
         document.getElementById('pdfFooterInfo').innerHTML = footerInfo;
 
-        // --- LAMPIRAN GAMBAR DI PDF ---
         const pdfAttachSection = document.getElementById('pdfAttachmentSection');
         const pdfAttachContent = document.getElementById('pdfAttachmentContent');
         if (pdfAttachmentData) {
@@ -1424,42 +1394,37 @@
             pdfAttachContent.innerHTML = '';
         }
 
-        // Tampilkan Template
         const template = document.getElementById('pdf-template');
         template.style.display = 'block';
 
-        // --- 3. SIMPAN DATA REKAP KE DB ---
-        if(loadingText) loadingText.innerText = "Menyimpan Data ke Server...";
+        if(loadingText) loadingText.innerText = "Membuat Halaman PDF...";
         
-        if(window.saveAndRecordTransaction) {
-            // Panggil fungsi simpan dengan status yang sudah ditentukan
-            window.saveAndRecordTransaction(paymentStatus).then(() => {
-                
-                if(loadingText) loadingText.innerText = "Membuat Halaman PDF...";
-                
-                // --- 4. GENERATE PDF ---
-                const opt = {
-                    margin:       [10, 10, 10, 10], 
-                    filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.90 }, // Lower quality slightly
-                    html2canvas:  { scale: 2, useCORS: true, logging: false }, 
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
+        try {
+            const opt = {
+                margin:       [10, 10, 10, 10], 
+                filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.95 }, 
+                html2canvas:  { scale: 1.5, useCORS: false, logging: false }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
 
-                html2pdf().set(opt).from(template).save().then(() => {
-                    template.style.display = 'none'; 
-                    toggleLoading(false);
-                    Swal.fire('Sukses', 'Data rekap tersimpan & PDF berhasil didownload', 'success');
-                });
-            }).catch(err => {
-                template.style.display = 'none';
-                toggleLoading(false);
-                console.error(err);
-                Swal.fire('Error', 'Gagal menyimpan data transaksi: ' + err.message, 'error');
+            await html2pdf().set(opt).from(template).save();
+            
+            template.style.display = 'none';
+            toggleLoading(false); 
+
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
             });
+            Toast.fire({ icon: 'success', title: 'PDF Didownload. Data disimpan di background.' });
+
+        } catch (error) {
+            template.style.display = 'none';
+            toggleLoading(false);
+            console.error(error);
+            Swal.fire('Error', 'Gagal memproses dokumen: ' + error.message, 'error');
         }
     }
-
 </script>
 
 </body>
