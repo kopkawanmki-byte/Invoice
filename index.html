@@ -194,6 +194,9 @@
         .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px; }
         .items-table th { background-color: #f8f8f8; border: 1px solid #000; padding: 6px; text-align: center; }
         .items-table td { padding: 5px; border: 1px solid #000; }
+
+        /* Page Break untuk Lampiran */
+        .page-break { page-break-before: always; }
     </style>
 </head>
 <body>
@@ -375,7 +378,7 @@
                                     <label class="form-label fw-bold text-primary"><i class="bi bi-upload me-1"></i> Bukti Transfer / Lampiran (Khusus SO)</label>
                                     <input type="file" class="form-control" id="proofUpload" accept="image/*">
                                     <div class="form-text text-muted small">
-                                        <i class="bi bi-info-circle-fill text-warning"></i> Upload lampiran akan mengubah status laporan menjadi <b>LUNAS</b>. Maksimal ukuran file 500KB.
+                                        <i class="bi bi-info-circle-fill text-warning"></i> Jika ada lampiran, status otomatis menjadi <b>LUNAS</b>. Lampiran akan dimasukkan ke halaman kedua PDF.
                                     </div>
                                 </div>
                             </div>
@@ -426,7 +429,7 @@
             
             <div class="mb-5">
                 <button type="button" class="btn btn-main" onclick="generateAndSave()">
-                    <i class="bi bi-file-earmark-pdf me-2"></i> Simpan & Download PDF
+                    <i class="bi bi-file-earmark-pdf me-2"></i> Simpan Rekap & Download PDF
                 </button>
             </div>
         </div>
@@ -455,11 +458,10 @@
                                     <th class="table-info">Total Customer</th>
                                     <th class="table-secondary">PPN 11%</th>
                                     <th class="table-success">Margin</th>
-                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody">
-                                <tr><td colspan="10" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
+                                <tr><td colspan="9" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
                             </tbody>
                             <tfoot id="reportTableFoot"></tfoot>
                         </table>
@@ -540,23 +542,17 @@
             <strong style="display: block; margin-top: 5px; font-size: 9pt; font-family: sans-serif; line-height: 1.3;">KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA</strong>
         </div>
     </div>
-</div>
-<!-- END PDF TEMPLATE -->
 
-<!-- Modal View Bukti -->
-<div class="modal fade" id="viewProofModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bukti Transfer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center bg-light">
-                <img id="proofImagePreview" src="" class="img-fluid rounded shadow-sm" alt="Bukti Transfer">
-            </div>
+    <!-- AREA LAMPIRAN BUKTI TRANSFER (HALAMAN BARU DI PDF) -->
+    <div id="pdfAttachmentSection" style="display: none; margin-top: 20px;">
+        <div class="page-break"></div>
+        <h3 style="text-align: center; color: #4c51bf; margin-bottom: 20px;">LAMPIRAN BUKTI TRANSFER</h3>
+        <div id="pdfAttachmentContent" style="text-align: center; border: 1px solid #ddd; padding: 10px;">
+            <!-- Gambar akan diinject di sini -->
         </div>
     </div>
 </div>
+<!-- END PDF TEMPLATE -->
 
 <!-- Modal Master Data -->
 <div class="modal fade" id="masterModal" tabindex="-1">
@@ -694,31 +690,20 @@
 
             tableBody.innerHTML = '';
             docs.forEach(data => {
-                // Handle old data structure safely
                 const tMKI = parseFloat(data.totalMKI) || 0;
                 const tCust = parseFloat(data.totalCust) || 0;
                 const tPPN = parseFloat(data.ppn) || 0;
                 const tMargin = parseFloat(data.margin) || 0;
 
-                // Akumulasi Total
                 sumMKI += tMKI;
                 sumCust += tCust;
                 sumPPN += tPPN;
                 sumMargin += tMargin;
 
                 // Logic Status Lunas
-                let statusBadge = '<span class="badge bg-secondary">Menunggu</span>';
-                let actionBtn = '-';
-                
+                let statusBadge = '<span class="badge bg-warning text-dark">Tunggu Bayar</span>';
                 if (data.status === 'Lunas') {
                     statusBadge = '<span class="badge bg-success">LUNAS</span>';
-                    // Tombol Lihat Bukti
-                    if(data.proofImage) {
-                        actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="viewProof('${data.docNumber}')">Bukti</button>`;
-                        // Simpan sementara di window untuk akses modal
-                        if(!window.proofs) window.proofs = {};
-                        window.proofs[data.docNumber] = data.proofImage;
-                    }
                 }
 
                 const row = `
@@ -732,7 +717,6 @@
                         <td class="text-end text-info">${formatRp(tCust)}</td>
                         <td class="text-end text-secondary">${formatRp(tPPN)}</td>
                         <td class="text-end text-success fw-bold">${formatRp(tMargin)}</td>
-                        <td class="text-center">${actionBtn}</td>
                     </tr>
                 `;
                 tableBody.innerHTML += row;
@@ -747,7 +731,6 @@
                         <td class="text-end text-info">${formatRp(sumCust)}</td>
                         <td class="text-end text-secondary">${formatRp(sumPPN)}</td>
                         <td class="text-end text-success">${formatRp(sumMargin)}</td>
-                        <td></td>
                     </tr>
                 `;
             }
@@ -757,16 +740,6 @@
         });
     }
     
-    // Fungsi Lihat Bukti di Modal
-    window.viewProof = (docId) => {
-        const imgData = window.proofs[docId];
-        if(imgData) {
-            document.getElementById('proofImagePreview').src = imgData;
-            const modal = new bootstrap.Modal(document.getElementById('viewProofModal'));
-            modal.show();
-        }
-    };
-
     window.loadReports = function() {
         console.log("Refreshing reports...");
     };
@@ -906,7 +879,7 @@
     }
 
     // Fungsi Gabungan: Save Transaction + Update Counter + Generate PDF
-    window.saveAndRecordTransaction = async () => {
+    window.saveAndRecordTransaction = async (status) => {
         const { year, month } = getDateParts();
         
         // HITUNG TOTAL MKI & TOTAL CUSTOMER DI BELAKANG LAYAR
@@ -917,6 +890,8 @@
             const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
             const select = row.querySelector('.item-sku');
             const option = select.options[select.selectedIndex];
+            
+            // Ambil harga dari atribut hidden di option
             const pMKI = parseFloat(option.getAttribute('data-price-mki')) || 0;
             const pCust = parseFloat(option.getAttribute('data-price-cust')) || 0;
             
@@ -941,24 +916,7 @@
 
         const customer = document.getElementById('customerName').value;
         
-        // --- LOGIKA UPLOAD BUKTI (KHUSUS SO) ---
-        let paymentStatus = 'Menunggu'; 
-        let proofBase64 = null;
-
-        if (currentFormType === 'so') {
-            const fileInput = document.getElementById('proofUpload');
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                if (file.size > 500000) { 
-                    Swal.fire('Error', 'Ukuran file bukti terlalu besar (Max 500KB). Silakan kompres gambar.', 'error');
-                    throw new Error('File too large');
-                }
-                proofBase64 = await getBase64(file);
-                paymentStatus = 'Lunas'; 
-            }
-        }
-
-        // 1. Simpan Laporan ke Firestore 'transactions'
+        // 1. Simpan Laporan ke Firestore 'transactions' (TANPA GAMBAR)
         const transData = {
             date: document.getElementById('docDate').value,
             type: currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order',
@@ -969,11 +927,11 @@
             totalCust: totalCust,
             ppn: ppn,
             margin: margin,
-            status: paymentStatus, 
-            proofImage: proofBase64, 
-            docNumber: docNumber, // ID Utama untuk referensi
+            status: status, // Status diterima dari argumen fungsi
+            docNumber: docNumber, 
             createdAt: new Date().toISOString()
         };
+        
         await addDoc(transactionCol, transData);
 
         // 2. Update Counter
@@ -1330,8 +1288,8 @@
         }
     }
 
-    // Fungsi Utama: Generate PDF dan Simpan Data
-    function generateAndSave() {
+    // Fungsi Utama: Rekam Data ke Database & Download PDF
+    async function generateAndSave() {
         const element = document.getElementById('printArea');
         const company = document.getElementById('companyName').value;
         if(!company) {
@@ -1341,19 +1299,39 @@
 
         toggleLoading(true);
 
-        // Copy data form ke PDF Template
+        // --- 1. PROSES FILE & STATUS ---
+        const fileInput = document.getElementById('proofUpload');
+        let pdfAttachmentData = null;
+        let paymentStatus = 'Tunggu Bayar'; // Default jika tidak ada lampiran
+
+        // Jika SO dan ada file, baca file untuk PDF
+        if (currentFormType === 'so' && fileInput.files.length > 0) {
+            try {
+                const file = fileInput.files[0];
+                if (file.size > 1000000) { // Limit 1MB agar browser tidak crash saat generate PDF
+                    throw new Error('Ukuran file lampiran terlalu besar (Maks 1MB).');
+                }
+                pdfAttachmentData = await getBase64(file);
+                paymentStatus = 'Lunas'; // Status jadi Lunas
+            } catch (error) {
+                toggleLoading(false);
+                Swal.fire('Error File', error.message, 'error');
+                return;
+            }
+        }
+
+        // --- 2. SIAPKAN PDF TEMPLATE ---
+        // Logo & Info Dasar
         document.getElementById('pdfLogoImg').src = logoBase64 || "";
         document.getElementById('pdfLogoImg').style.display = logoBase64 ? 'block' : 'none';
         document.getElementById('pdfLogoPlaceholder').style.display = logoBase64 ? 'none' : 'block';
         
         document.getElementById('pdfDocTitle').innerText = currentFormType === 'proforma' ? 'PROFORMA INVOICE' : 'SURAT ORDER';
         
-        // Pilihan No Dokumen berdasarkan Tipe
         let docNo = document.getElementById('docNumber').value;
         let infoTableBody = '';
 
         if (currentFormType === 'proforma') {
-            // Proforma: No Invoice, Tanggal, Jatuh Tempo, No PO (Ref)
             infoTableBody = `
                 <tr><td width="80"><strong>No Invoice</strong></td><td>: ${docNo}</td></tr>
                 <tr><td><strong>Tanggal</strong></td><td>: ${document.getElementById('docDate').value}</td></tr>
@@ -1361,7 +1339,6 @@
                 <tr><td><strong>No PO</strong></td><td>: ${document.getElementById('soReference').value}</td></tr>
             `;
         } else {
-            // SO: Tanggal, Jatuh Tempo, Referensi (No SO)
             infoTableBody = `
                 <tr><td width="80"><strong>Tanggal</strong></td><td>: ${document.getElementById('docDate').value}</td></tr>
                 <tr><td><strong>Jatuh Tempo</strong></td><td>: ${document.getElementById('dueDate').value}</td></tr>
@@ -1373,11 +1350,9 @@
         document.getElementById('pdfCompany').innerText = company;
         document.getElementById('pdfCustomer').innerText = document.getElementById('customerName').value;
         document.getElementById('pdfAddress').innerText = document.getElementById('address').value;
-        
-        // Grand Total PDF
         document.getElementById('pdfGrandTotal').innerText = document.getElementById('grandTotal').innerText;
 
-        // Copy Tabel Barang ke PDF
+        // Copy Tabel Barang
         const pdfBody = document.getElementById('pdfTableBody');
         pdfBody.innerHTML = '';
         document.querySelectorAll('#transactionBody tr').forEach(row => {
@@ -1386,7 +1361,6 @@
             const qty = row.querySelector('.item-qty').value;
             const price = row.querySelector('.item-price').value;
             const total = row.querySelector('.item-total').value;
-            
             if(sku) {
                 const newRow = `
                     <tr>
@@ -1401,7 +1375,7 @@
             }
         });
 
-        // Set Footer Info (Remarks / Bank)
+        // Footer Info
         let footerInfo = '';
         if(currentFormType === 'so') {
             footerInfo = `<strong>Remarks:</strong><br>- Retail<br>- Incoterm FOT<br>- Exclude Tax`;
@@ -1410,13 +1384,26 @@
         }
         document.getElementById('pdfFooterInfo').innerHTML = footerInfo;
 
-        // Tampilkan template sebentar
+        // --- LAMPIRAN GAMBAR DI PDF ---
+        const pdfAttachSection = document.getElementById('pdfAttachmentSection');
+        const pdfAttachContent = document.getElementById('pdfAttachmentContent');
+        if (pdfAttachmentData) {
+            pdfAttachSection.style.display = 'block';
+            pdfAttachContent.innerHTML = `<img src="${pdfAttachmentData}" style="max-width: 100%; max-height: 800px;">`;
+        } else {
+            pdfAttachSection.style.display = 'none';
+            pdfAttachContent.innerHTML = '';
+        }
+
+        // Tampilkan Template
         const template = document.getElementById('pdf-template');
         template.style.display = 'block';
 
-        // PANGGIL FUNGSI SIMPAN DB SEBELUM PRINT
+        // --- 3. SIMPAN DATA REKAP KE DB ---
         if(window.saveAndRecordTransaction) {
-            window.saveAndRecordTransaction().then(() => {
+            // Panggil fungsi simpan dengan status yang sudah ditentukan
+            window.saveAndRecordTransaction(paymentStatus).then(() => {
+                // --- 4. GENERATE PDF ---
                 const opt = {
                     margin:       [10, 10, 10, 10], 
                     filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
@@ -1426,9 +1413,9 @@
                 };
 
                 html2pdf().set(opt).from(template).save().then(() => {
-                    template.style.display = 'none'; // Sembunyikan lagi
+                    template.style.display = 'none'; 
                     toggleLoading(false);
-                    Swal.fire('Sukses', 'Data tersimpan & PDF berhasil didownload', 'success');
+                    Swal.fire('Sukses', 'Data rekap tersimpan & PDF berhasil didownload', 'success');
                 });
             }).catch(err => {
                 template.style.display = 'none';
