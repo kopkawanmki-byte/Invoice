@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aplikasi Invoice & Order System</title>
+    
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- JS Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* ======================================= */
+        /* CSS Tema Cerah & Modern (User Style)    */
+        /* ======================================= */
+        :root {
+            --bg-light: #f4f7f9;
+            --card-bg: #ffffff;
+            --border-color: #e0e6ed;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --input-bg: #f8fafc;
+            --accent: #4c51bf;
+            --accent-hover: #3c4199;
+            --focus-ring: rgba(76, 81, 191, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-light);
+            background-image: linear-gradient(135deg, #f0f4f8 0%, #fcfcfc 100%);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            padding-bottom: 50px;
+        }
+
+        h2, .fw-bold, .card-header-pro { font-family: 'Inter', sans-serif; }
+
+        .navbar-custom {
+            background: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            padding: 15px 0;
+        }
+
+        .nav-pills .nav-link {
+            color: var(--text-muted);
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--accent);
+            color: white;
+            box-shadow: 0 4px 6px rgba(76, 81, 191, 0.2);
+        }
+
+        /* --- CARD STYLE --- */
+        .card-pro {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .card-header-pro {
+            background: #edf2f7;
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-body-pro { padding: 25px; }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border: 1px solid #ccd6e0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--card-bg);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+            outline: none;
+        }
+
+        .form-control[readonly] {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+        }
+
+        /* --- TABLE STYLE --- */
+        .table-pro {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .table-pro th {
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding-bottom: 12px;
+            text-align: center;
+        }
+
+        .table-pro td {
+            vertical-align: middle;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+        }
+        
+        .table-pro tr td:first-child { border-left: 1px solid var(--border-color); border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        .table-pro tr td:last-child { border-right: 1px solid var(--border-color); border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+        .table-pro .item-total {
+            background-color: transparent !important;
+            border: none !important;
+            font-weight: 600;
+            color: var(--accent) !important;
+            text-align: right;
+        }
+
+        .btn-main {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-main:hover { background: var(--accent-hover); color: white; transform: translateY(-1px); }
+
+        .btn-action { padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; margin: 0 2px; }
+
+        .loading-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(255,255,255,0.8); z-index: 9999;
+            display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+
+        /* PDF Styles - Hidden from view */
+        #pdf-container { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar & Tabs -->
+<div class="navbar-custom sticky-top">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold m-0" style="color: var(--accent);"><i class="bi bi-layers-half"></i> App Invoice & Order</h4>
+            <span class="badge bg-light text-dark border">Firebase Connected <i class="bi bi-circle-fill text-success ms-1" style="font-size: 8px;"></i></span>
+        </div>
+        <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="master-tab" data-bs-toggle="tab" data-bs-target="#master-pane" type="button" role="tab"><i class="bi bi-database me-2"></i>Master Data</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="proforma-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('proforma')"><i class="bi bi-receipt me-2"></i>Proforma Invoice</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="so-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('so')"><i class="bi bi-box-seam me-2"></i>Surat Order</button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="container" style="max-width: 900px;">
+    
+    <div class="tab-content" id="myTabContent">
+        
+        <!-- ============================================= -->
+        <!-- TAB 1: MASTER DATA MANAGEMENT (WITH LOGIN)    -->
+        <!-- ============================================= -->
+        <div class="tab-pane fade show active" id="master-pane" role="tabpanel">
+            
+            <!-- PANEL LOGIN ADMIN -->
+            <div id="masterLoginPanel" class="row justify-content-center py-5">
+                <div class="col-md-5">
+                    <div class="card-pro text-center p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="mb-4 fw-bold">Login Admin</h4>
+                        <div class="mb-3 text-start">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" id="inputUser" placeholder="Masukkan username">
+                        </div>
+                        <div class="mb-4 text-start">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="inputPass" placeholder="Masukkan password">
+                        </div>
+                        <button class="btn btn-main" onclick="checkAdminLogin()">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> Masuk
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT MASTER DATA (HIDDEN BY DEFAULT) -->
+            <div id="masterDataContent" style="display: none;">
+                <div class="card-pro">
+                    <div class="card-header-pro">
+                        <span><i class="bi bi-list-check me-2"></i> Daftar Produk (SKU)</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger me-2" onclick="logoutAdmin()"><i class="bi bi-box-arrow-left"></i> Logout</button>
+                            <button class="btn btn-sm btn-primary" onclick="openMasterModal()"><i class="bi bi-plus-lg"></i> Tambah Baru</button>
+                        </div>
+                    </div>
+                    <div class="card-body-pro">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>SKU / Kode</th>
+                                        <th>Deskripsi Barang</th>
+                                        <th class="text-end">Harga MKI (SO)</th>
+                                        <th class="text-end">Harga Customer (Inv)</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="masterTableBody">
+                                    <tr><td colspan="5" class="text-center py-4 text-muted">Memuat data dari Firebase...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- TAB 2 & 3: FORM GENERATOR (SHARED)            -->
+        <!-- ============================================= -->
+        <div class="tab-pane fade" id="form-pane" role="tabpanel">
+            <div class="mb-4 text-center">
+                <h2 class="fw-bold text-dark mb-1" id="formTitle">Form Dokumen</h2>
+                <p class="text-muted small">Lengkapi data di bawah untuk generate PDF</p>
+                <div class="alert alert-info py-1 px-2 d-inline-block small mb-0 mt-2" id="priceInfoBadge">
+                    <i class="bi bi-info-circle"></i> Menggunakan Harga Customer (Proforma)
+                </div>
+            </div>
+
+            <!-- Area yang akan di-Print/PDF -->
+            <div id="printArea">
+                <!-- Header Dokumen (Logo & Info) -->
+                <div class="card-pro">
+                    <div class="card-header-pro"><i class="bi bi-building me-2"></i> Header Dokumen</div>
+                    <div class="card-body-pro">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <label class="form-label">Upload Logo Perusahaan</label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="logoUpload" accept="image/*" onchange="previewLogo(this)">
+                                    <button class="btn btn-outline-primary no-print" type="button" onclick="saveLogoDefault()" title="Simpan logo agar tidak perlu upload lagi">
+                                        <i class="bi bi-save"></i> Simpan
+                                    </button>
+                                    <button class="btn btn-outline-danger no-print" type="button" onclick="clearLogoDefault()" title="Hapus logo default">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Klik "Simpan" agar logo otomatis muncul di transaksi berikutnya.</div>
+                            </div>
+                            <div class="col-md-4 text-center mt-3 mt-md-0">
+                                <div id="logoPreviewBox" style="border: 2px dashed #ccc; border-radius: 8px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                    <span class="text-muted small">Preview Logo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-pro">
+                    <div class="card-header-pro"><i class="bi bi-person-lines-fill me-2"></i> Informasi Pelanggan</div>
+                    <div class="card-body-pro">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nama Perusahaan (Proyek)</label>
+                                <input type="text" class="form-control" id="companyName">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nama Customer / Attn</label>
+                                <input type="text" class="form-control" id="customerName">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Alamat Lengkap</label>
+                                <textarea class="form-control" id="address" rows="2"></textarea>
+                            </div>
+                            
+                            <!-- AUTO NUMBER SECTION -->
+                            <div class="col-md-6">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span id="lblRefNumber">Nomor Dokumen</span>
+                                    <a href="#" class="text-decoration-none no-print" onclick="refreshAutoNumber('doc')" style="font-size: 0.8em;">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh No
+                                    </a>
+                                </label>
+                                <input type="text" class="form-control fw-bold text-primary" id="docNumber" placeholder="Loading...">
+                            </div>
+                            
+                            <!-- UPDATE: Menambahkan ID divSoRef agar bisa di-hide saat mode SO -->
+                            <div class="col-md-6" id="divSoRef">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Nomor Referensi SO / PO</span>
+                                    <a href="#" class="text-decoration-none no-print" onclick="refreshAutoNumber('ref')" style="font-size: 0.8em;">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh No
+                                    </a>
+                                </label>
+                                <input type="text" class="form-control fw-bold text-success" id="soReference" placeholder="Loading...">
+                            </div>
+                            <!-- END AUTO NUMBER -->
+
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal</label>
+                                <input type="date" class="form-control" id="docDate" onchange="onDateChanged()">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Jatuh Tempo</label>
+                                <input type="date" class="form-control" id="dueDate">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-pro">
+                    <div class="card-header-pro">
+                        <span><i class="bi bi-cart me-2"></i> Rincian Barang</span>
+                        <button type="button" class="btn btn-sm btn-primary no-print" onclick="addRow()">
+                            <i class="bi bi-plus-circle"></i> Tambah
+                        </button>
+                    </div>
+                    <div class="card-body-pro">
+                        <div class="table-responsive">
+                            <table class="table-pro">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%;">SKU</th>
+                                        <th style="width: 30%;">Deskripsi</th>
+                                        <th style="width: 10%;">Qty</th>
+                                        <th style="width: 20%;">Harga (@)</th>
+                                        <th style="width: 20%;">Total</th>
+                                        <th style="width: 30px;" class="no-print"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end align-items-center mt-3 pt-3 border-top">
+                            <div class="text-muted me-3 fw-medium">Grand Total:</div>
+                            <div id="grandTotal" class="fw-bold fs-4 text-primary">Rp 0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Print Area -->
+
+            <div class="mb-5">
+                <button type="button" class="btn btn-main" onclick="generatePDF()">
+                    <i class="bi bi-file-earmark-pdf me-2"></i> Simpan & Download PDF
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Master Data -->
+<div class="modal fade" id="masterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Kelola Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editDocId">
+                <div class="mb-3">
+                    <label class="form-label">SKU / Kode Barang</label>
+                    <input type="text" class="form-control" id="masterSku" placeholder="Contoh: A001">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Deskripsi Barang</label>
+                    <input type="text" class="form-control" id="masterDesc" placeholder="Nama Produk">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label text-primary fw-bold">Harga MKI (Surat Order)</label>
+                        <input type="number" class="form-control border-primary" id="masterPriceMKI" placeholder="0">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label text-info fw-bold">Harga Customer (Proforma)</label>
+                        <input type="number" class="form-control border-info" id="masterPriceCust" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveMasterData()">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary mb-2" role="status"></div>
+    <span class="fw-bold text-dark">Memproses...</span>
+</div>
+
+<!-- FIREBASE SDK (Modular) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // 1. Firebase Configuration
+    const myOwnConfig = {
+        apiKey: "AIzaSyBq1vnEdNDPm1jIbIOB-mSsm5nWcm6TE3g",
+        authDomain: "master-harga-produk-mi-kop.firebaseapp.com",
+        projectId: "master-harga-produk-mi-kop",
+        storageBucket: "master-harga-produk-mi-kop.firebasestorage.app",
+        messagingSenderId: "851705916067",
+        appId: "1:851705916067:web:9ad5a0f625ba60fbc06d16"
+    };
+
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myOwnConfig;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'master-harga-app';
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    
+    // Path Collection
+    const productCol = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+    const countersPath = `artifacts/${appId}/public/data/counters`; // Collection untuk menyimpan counter
+
+    window.localProducts = [];
+    window.currentCounters = { doc: 1, ref: 1 }; // Cache counter sementara
+
+    const initApp = async () => {
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Auth Error:", error);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setupRealtimeListener();
+                // Load nomor otomatis saat pertama kali buka
+                fetchAllAutoNumbers();
+            }
+        });
+    };
+
+    function setupRealtimeListener() {
+        onSnapshot(productCol, (snapshot) => {
+            const tableBody = document.getElementById('masterTableBody');
+            tableBody.innerHTML = '';
+            window.localProducts = []; 
+
+            if (snapshot.empty) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Belum ada data produk. Silakan tambah baru.</td></tr>';
+                refreshAllDropdowns();
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const id = docSnap.id;
+                
+                const pMKI = data.priceMKI || data.price || 0;
+                const pCust = data.priceCustomer || data.price || 0;
+
+                window.localProducts.push({ id, ...data, priceMKI: pMKI, priceCustomer: pCust });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fw-medium">${data.sku}</td>
+                    <td>${data.description}</td>
+                    <td class="text-end font-monospace text-primary">${formatRp(pMKI)}</td>
+                    <td class="text-end font-monospace text-info">${formatRp(pCust)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-primary btn-action btn-edit" 
+                            data-id="${id}" 
+                            data-sku="${data.sku}" 
+                            data-desc="${data.description}" 
+                            data-price-mki="${pMKI}"
+                            data-price-cust="${pCust}">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-danger btn-action btn-delete" data-id="${id}"><i class="bi bi-trash-fill"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const el = e.currentTarget.dataset;
+                    openMasterModal(el.id, el.sku, el.desc, el.priceMki, el.priceCust);
+                });
+            });
+            
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => deleteMasterData(e.currentTarget.dataset.id));
+            });
+
+            refreshAllDropdowns();
+        }, (error) => {
+            console.error("Error:", error);
+            Swal.fire('Koneksi Error', 'Gagal memuat data dari database. Pastikan Firestore Rules mengizinkan.', 'error');
+        });
+    }
+
+    // ==========================================
+    // LOGIC: AUTO NUMBERING SYSTEM (NEW)
+    // ==========================================
+
+    // Helper untuk format angka (padZero)
+    const pad = (num, size) => {
+        let s = "000000000" + num;
+        return s.substr(s.length - size);
+    }
+
+    // Mendapatkan Tanggal & Formatnya
+    const getDateParts = () => {
+        const dateInput = document.getElementById('docDate').value;
+        const date = dateInput ? new Date(dateInput) : new Date();
+        const year = date.getFullYear();
+        const yearShort = year.toString().substr(-2);
+        const month = pad(date.getMonth() + 1, 2);
+        return { year, yearShort, month };
+    }
+
+    // 1. Fungsi Mengambil Nomor Berikutnya (Read Only)
+    window.fetchAllAutoNumbers = async () => {
+        await getAutoNumber('invoice'); // Untuk Nomor Invoice (Format SO)
+        await getAutoNumber('ref_so');  // Untuk Referensi SO (Format PRO-KOPKAR)
+    }
+
+    window.refreshAutoNumber = async (type) => {
+        const key = type === 'doc' ? 'invoice' : 'ref_so';
+        await getAutoNumber(key);
+    }
+
+    // Mengambil data dari Firestore
+    async function getAutoNumber(type) {
+        const { year, yearShort, month } = getDateParts();
+        const docId = `counter_${type}_${year}_${month}`; // Reset setiap bulan karena ID mengandung Bulan
+        
+        try {
+            const docRef = doc(db, countersPath, docId);
+            const docSnap = await getDoc(docRef);
+            
+            let currentSequence = 1; // Default mulai dari 1
+            if (docSnap.exists()) {
+                currentSequence = docSnap.data().lastSequence + 1; // Ambil nomor terakhir + 1
+            }
+            
+            // Simpan di global variable untuk digunakan saat save
+            if(type === 'invoice') window.currentCounters.doc = currentSequence;
+            if(type === 'ref_so') window.currentCounters.ref = currentSequence;
+
+            // Update UI Input
+            if (type === 'invoice') {
+                // Format: SO/0008/12/25 (4 digit urut, bulan, tahun pendek)
+                const formatted = `SO/${pad(currentSequence, 4)}/${month}/${yearShort}`;
+                document.getElementById('docNumber').value = formatted;
+            } else if (type === 'ref_so') {
+                // Format: PRO-KOPKAR/08/12/2025 (2 digit urut, bulan, tahun panjang)
+                const formatted = `PRO-KOPKAR/${pad(currentSequence, 2)}/${month}/${year}`;
+                document.getElementById('soReference').value = formatted;
+            }
+
+        } catch (error) {
+            console.error("Gagal mengambil nomor otomatis:", error);
+        }
+    }
+
+    // 2. Fungsi Update Counter (+1) saat klik Save/Download
+    window.incrementCountersInDB = async () => {
+        const { year, month } = getDateParts();
+        
+        // Update Counter Invoice/SO (Doc Number)
+        const invId = `counter_invoice_${year}_${month}`;
+        await setDoc(doc(db, countersPath, invId), { 
+            lastSequence: window.currentCounters.doc 
+        });
+
+        // Update Counter Ref SO - HANYA JIKA MODE PROFORMA
+        // Karena di mode SO, field ini disembunyikan dan tidak dipakai
+        if (currentFormType === 'proforma') {
+            const refId = `counter_ref_so_${year}_${month}`;
+            await setDoc(doc(db, countersPath, refId), { 
+                lastSequence: window.currentCounters.ref 
+            });
+        }
+        
+        // Refresh nomor untuk sesi berikutnya (agar nambah lagi)
+        setTimeout(fetchAllAutoNumbers, 1000);
+    }
+
+    // 3. Trigger saat tanggal berubah (agar nomor menyesuaikan bulan)
+    window.onDateChanged = () => {
+        fetchAllAutoNumbers();
+    }
+
+    // ==========================================
+    // END AUTO NUMBERING
+    // ==========================================
+
+    window.saveMasterData = async () => {
+        const id = document.getElementById('editDocId').value;
+        const sku = document.getElementById('masterSku').value;
+        const description = document.getElementById('masterDesc').value;
+        const priceMKI = parseFloat(document.getElementById('masterPriceMKI').value) || 0;
+        const priceCustomer = parseFloat(document.getElementById('masterPriceCust').value) || 0;
+
+        if(!sku || !description) {
+            Swal.fire('Error', 'SKU dan Deskripsi wajib diisi', 'warning');
+            return;
+        }
+
+        toggleLoading(true);
+        try {
+            const dataToSave = { sku, description, priceMKI, priceCustomer };
+            
+            if (id) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id);
+                await updateDoc(docRef, dataToSave);
+                Swal.fire('Sukses', 'Data berhasil diperbarui', 'success');
+            } else {
+                await addDoc(productCol, dataToSave);
+                Swal.fire('Sukses', 'Data berhasil ditambahkan', 'success');
+            }
+            
+            const modalEl = document.getElementById('masterModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Gagal menyimpan data: ' + error.message, 'error');
+        } finally {
+            toggleLoading(false);
+        }
+    };
+
+    window.deleteMasterData = async (id) => {
+        const result = await Swal.fire({
+            title: 'Hapus data?',
+            text: "Data tidak bisa dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        });
+
+        if (result.isConfirmed) {
+            toggleLoading(true);
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id);
+                await deleteDoc(docRef);
+                Swal.fire('Terhapus!', 'Data telah dihapus.', 'success');
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+    };
+
+    initApp();
+
+</script>
+
+<script>
+    // ==========================================
+    // LOGIC: UI & FORM INTERACTION (Standard JS)
+    // ==========================================
+
+    let currentFormType = 'proforma'; // 'proforma' or 'so'
+    let logoBase64 = "";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('docDate').valueAsDate = new Date();
+        document.getElementById('dueDate').valueAsDate = new Date(new Date().setDate(new Date().getDate() + 14));
+        addRow(); 
+        loadLogoDefault();
+        
+        // CHECK LOGIN SESSION
+        if(sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+            document.getElementById('masterLoginPanel').style.display = 'none';
+            document.getElementById('masterDataContent').style.display = 'block';
+        }
+    });
+
+    // --- FITUR LOGIN ADMIN ---
+    function checkAdminLogin() {
+        const u = document.getElementById('inputUser').value;
+        const p = document.getElementById('inputPass').value;
+        
+        if (u === 'admin' && p === 'admin123') {
+            // Login Sukses
+            document.getElementById('masterLoginPanel').style.display = 'none';
+            document.getElementById('masterDataContent').style.display = 'block';
+            
+            // Simpan sesi
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Login Berhasil',
+                text: 'Selamat datang kembali, Admin.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire('Gagal', 'Username atau Password salah!', 'error');
+        }
+    }
+
+    function logoutAdmin() {
+        sessionStorage.removeItem('isAdminLoggedIn');
+        document.getElementById('masterLoginPanel').style.display = 'flex';
+        document.getElementById('masterDataContent').style.display = 'none';
+        
+        // Reset input
+        document.getElementById('inputUser').value = '';
+        document.getElementById('inputPass').value = '';
+    }
+    // -------------------------
+
+    // --- FITUR LOGO STORAGE ---
+    function saveLogoDefault() {
+        if (logoBase64) {
+            localStorage.setItem('savedLogo', logoBase64);
+            Swal.fire('Tersimpan', 'Logo berhasil disimpan di browser. Tidak perlu upload lagi nanti.', 'success');
+        } else {
+            Swal.fire('Info', 'Pilih file logo terlebih dahulu.', 'warning');
+        }
+    }
+
+    function clearLogoDefault() {
+        localStorage.removeItem('savedLogo');
+        logoBase64 = "";
+        document.getElementById('logoPreviewBox').innerHTML = '<span class="text-muted small">Preview Logo</span>';
+        document.getElementById('logoPreviewBox').style.border = "2px dashed #ccc";
+        document.getElementById('logoUpload').value = "";
+        Swal.fire('Terhapus', 'Logo default telah dihapus.', 'success');
+    }
+
+    function loadLogoDefault() {
+        const saved = localStorage.getItem('savedLogo');
+        if (saved) {
+            logoBase64 = saved;
+            document.getElementById('logoPreviewBox').innerHTML = `<img src="${logoBase64}" style="max-height: 100%; max-width: 100%;">`;
+            document.getElementById('logoPreviewBox').style.border = "none";
+        }
+    }
+    // -------------------------
+
+    function setFormType(type) {
+        currentFormType = type;
+        const titleEl = document.getElementById('formTitle');
+        const refLbl = document.getElementById('lblRefNumber');
+        const badge = document.getElementById('priceInfoBadge');
+        const divSoRef = document.getElementById('divSoRef'); // Element Wrapper
+        
+        if(type === 'proforma') {
+            titleEl.innerHTML = '<span class="text-info">Proforma Invoice</span> Generator';
+            refLbl.innerText = 'Nomor Invoice';
+            badge.className = 'alert alert-info py-1 px-2 d-inline-block small mb-0 mt-2';
+            badge.innerHTML = '<i class="bi bi-info-circle"></i> Menggunakan Harga Customer (Proforma)';
+            // Show Ref SO
+            if(divSoRef) divSoRef.style.display = 'block';
+        } else {
+            titleEl.innerHTML = '<span class="text-primary">Surat Order</span> Generator';
+            refLbl.innerText = 'Nomor SO';
+            badge.className = 'alert alert-primary py-1 px-2 d-inline-block small mb-0 mt-2';
+            badge.innerHTML = '<i class="bi bi-info-circle"></i> Menggunakan Harga MKI (Surat Order)';
+            // Hide Ref SO
+            if(divSoRef) divSoRef.style.display = 'none';
+        }
+
+        // Update harga di row yang sudah ada
+        updateExistingRowsPrice();
+    }
+
+    function updateExistingRowsPrice() {
+        document.querySelectorAll('#transactionBody tr').forEach(row => {
+            const selectEl = row.querySelector('.item-sku');
+            if(selectEl && selectEl.value) {
+                itemSelected(selectEl); // Re-trigger selection logic to pick correct price
+            }
+        });
+    }
+
+    function openMasterModal(id = '', sku = '', desc = '', priceMki = '', priceCust = '') {
+        document.getElementById('editDocId').value = id;
+        document.getElementById('masterSku').value = sku;
+        document.getElementById('masterDesc').value = desc;
+        document.getElementById('masterPriceMKI').value = priceMki;
+        document.getElementById('masterPriceCust').value = priceCust;
+        
+        const modal = new bootstrap.Modal(document.getElementById('masterModal'));
+        modal.show();
+    }
+
+    function toggleLoading(show) {
+        document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+    }
+
+    function formatRp(n) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('transactionBody');
+        const tr = document.createElement('tr');
+        
+        let options = '<option value="" disabled selected>Pilih Barang...</option>';
+        if (window.localProducts && window.localProducts.length > 0) {
+            window.localProducts.forEach(p => {
+                // Simpan KEDUA harga di atribut
+                options += `<option value="${p.sku}" 
+                            data-desc="${p.description}" 
+                            data-price-mki="${p.priceMKI}"
+                            data-price-cust="${p.priceCustomer}">
+                            ${p.sku} - ${p.description}
+                            </option>`;
+            });
+        }
+
+        tr.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm item-sku" onchange="itemSelected(this)">
+                    ${options}
+                </select>
+            </td>
+            <td><input type="text" class="form-control form-control-sm item-desc" placeholder="Deskripsi"></td>
+            <td><input type="number" class="form-control form-control-sm text-end item-qty" value="1" min="1" oninput="calcRow(this)"></td>
+            <td><input type="number" class="form-control form-control-sm text-end item-price" value="0" oninput="calcRow(this)"></td>
+            <td><input type="text" class="form-control form-control-sm item-total" value="Rp 0" readonly></td>
+            <td class="no-print"><button type="button" class="btn btn-sm btn-light text-danger" onclick="deleteRow(this)"><i class="bi bi-x-circle-fill"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function refreshAllDropdowns() {
+        const selects = document.querySelectorAll('.item-sku');
+        selects.forEach(select => {
+            const currentVal = select.value;
+            let options = '<option value="" disabled selected>Pilih Barang...</option>';
+            if (window.localProducts) {
+                window.localProducts.forEach(p => {
+                    options += `<option value="${p.sku}" 
+                                data-desc="${p.description}" 
+                                data-price-mki="${p.priceMKI}"
+                                data-price-cust="${p.priceCustomer}">
+                                ${p.sku} - ${p.description}
+                                </option>`;
+                });
+            }
+            select.innerHTML = options;
+            select.value = currentVal; 
+        });
+    }
+
+    function itemSelected(selectEl) {
+        const option = selectEl.options[selectEl.selectedIndex];
+        const row = selectEl.closest('tr');
+        
+        // Auto fill Deskripsi
+        row.querySelector('.item-desc').value = option.getAttribute('data-desc') || '';
+        
+        // Logika Pemilihan Harga
+        const priceMKI = parseFloat(option.getAttribute('data-price-mki')) || 0;
+        const priceCust = parseFloat(option.getAttribute('data-price-cust')) || 0;
+        
+        let finalPrice = 0;
+        if(currentFormType === 'so') {
+            finalPrice = priceMKI; // Surat Order pakai Harga MKI
+        } else {
+            finalPrice = priceCust; // Proforma pakai Harga Customer
+        }
+
+        row.querySelector('.item-price').value = finalPrice;
+        
+        calcRow(selectEl);
+    }
+
+    function calcRow(el) {
+        const row = el.closest('tr');
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        const total = qty * price;
+        
+        row.querySelector('.item-total').value = formatRp(total);
+        calcGrandTotal();
+    }
+
+    function deleteRow(btn) {
+        const rows = document.querySelectorAll('#transactionBody tr');
+        if(rows.length > 1) {
+            btn.closest('tr').remove();
+            calcGrandTotal();
+        }
+    }
+
+    function calcGrandTotal() {
+        let grand = 0;
+        document.querySelectorAll('#transactionBody tr').forEach(row => {
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            grand += (qty * price);
+        });
+        document.getElementById('grandTotal').innerText = formatRp(grand);
+    }
+
+    function previewLogo(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                logoBase64 = e.target.result;
+                document.getElementById('logoPreviewBox').innerHTML = `<img src="${logoBase64}" style="max-height: 100%; max-width: 100%;">`;
+                document.getElementById('logoPreviewBox').style.border = "none";
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function generatePDF() {
+        const element = document.getElementById('printArea');
+        const company = document.getElementById('companyName').value;
+        if(!company) {
+            Swal.fire('Info', 'Mohon isi Nama Perusahaan', 'info');
+            return;
+        }
+
+        toggleLoading(true);
+
+        // UPDATE COUNTER DI DATABASE SEBELUM PRINT
+        // Ini memastikan nomor bertambah untuk dokumen berikutnya
+        if(window.incrementCountersInDB) {
+            window.incrementCountersInDB(); 
+        }
+
+        const opt = {
+            margin:       [10, 10, 20, 10], 
+            filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        const clone = element.cloneNode(true);
+        
+        // Hapus tombol-tombol yang tidak perlu di PDF
+        clone.querySelectorAll('.no-print').forEach(el => el.remove());
+        
+        // Ubah input menjadi text biasa agar rapi
+        clone.querySelectorAll('.form-control, .form-select').forEach(el => {
+            const val = el.value;
+            const span = document.createElement('div');
+            span.innerText = val;
+            span.style.fontWeight = "500";
+            span.style.padding = "5px 0";
+            // Khusus nomor dokumen dibuat tebal
+            if(el.id === 'docNumber' || el.id === 'soReference') {
+                span.style.fontWeight = "bold";
+            }
+            el.parentNode.replaceChild(span, el);
+        });
+        
+        clone.querySelectorAll('.card-pro').forEach(card => {
+            card.style.border = "none";
+            card.style.boxShadow = "none";
+            card.style.marginBottom = "10px";
+        });
+        clone.querySelectorAll('.card-header-pro').forEach(head => {
+            head.style.background = "white";
+            head.style.borderBottom = "2px solid #000";
+            head.style.paddingLeft = "0";
+            head.style.color = "black";
+        });
+        clone.querySelectorAll('.card-body-pro').forEach(body => {
+            body.style.padding = "10px 0";
+        });
+
+        const headerTitle = document.createElement('h1');
+        headerTitle.innerText = currentFormType === 'proforma' ? 'PROFORMA INVOICE' : 'SURAT ORDER';
+        headerTitle.style.textAlign = 'center';
+        headerTitle.style.marginBottom = '20px';
+        headerTitle.style.color = '#333';
+        clone.prepend(headerTitle);
+
+        html2pdf().set(opt).from(clone).save().then(() => {
+            toggleLoading(false);
+            Swal.fire('Sukses', 'PDF Berhasil didownload & Nomor Urut Diperbarui', 'success');
+        });
+    }
+
+</script>
+
+</body>
+</html>
