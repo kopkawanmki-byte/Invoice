@@ -479,6 +479,7 @@
             }
         } catch (error) {
             console.error("Auth Error:", error);
+            Swal.fire('Auth Error', 'Gagal login anonim ke Firebase. Pastikan "Anonymous Auth" diaktifkan di Firebase Console.', 'error');
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -545,8 +546,14 @@
 
             refreshAllDropdowns();
         }, (error) => {
-            console.error("Error:", error);
-            Swal.fire('Koneksi Error', 'Gagal memuat data dari database. Pastikan Firestore Rules mengizinkan.', 'error');
+            console.error("Error detail:", error);
+            let msg = 'Gagal memuat data.';
+            if (error.code === 'permission-denied') {
+                msg = 'Izin ditolak. Pastikan "Anonymous Auth" aktif di Firebase Console & Rules diatur ke Test Mode.';
+            } else if (error.code === 'unavailable') {
+                msg = 'Layanan Firestore sedang offline atau koneksi internet terputus.';
+            }
+            Swal.fire('Koneksi Error', msg + ' (' + error.code + ')', 'error');
         });
     }
 
@@ -612,6 +619,9 @@
 
         } catch (error) {
             console.error("Gagal mengambil nomor otomatis:", error);
+            if (error.code === 'permission-denied') {
+                // Jangan spam alert, cukup log
+            }
         }
     }
 
@@ -677,7 +687,7 @@
             modal.hide();
         } catch (error) {
             console.error(error);
-            Swal.fire('Error', 'Gagal menyimpan data: ' + error.message, 'error');
+            Swal.fire('Error', 'Gagal menyimpan data: ' + error.code + '. Pastikan Firestore Rules mengizinkan.', 'error');
         } finally {
             toggleLoading(false);
         }
