@@ -446,8 +446,8 @@
     import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // 1. Firebase Configuration
-    const myOwnConfig = {
+    // 1. Firebase Configuration (GUNAKAN CONFIG USER LANGSUNG)
+    const firebaseConfig = {
         apiKey: "AIzaSyBq1vnEdNDPm1jIbIOB-mSsm5nWcm6TE3g",
         authDomain: "master-harga-produk-mi-kop.firebaseapp.com",
         projectId: "master-harga-produk-mi-kop",
@@ -456,40 +456,54 @@
         appId: "1:851705916067:web:9ad5a0f625ba60fbc06d16"
     };
 
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myOwnConfig;
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'master-harga-app';
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     
-    // Path Collection
-    const productCol = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-    const countersPath = `artifacts/${appId}/public/data/counters`; // Collection untuk menyimpan counter
+    // Path Collection SEDERHANA (ROOT) untuk menghindari permission error
+    const productCol = collection(db, 'products');
+    const countersPath = 'counters'; 
 
     window.localProducts = [];
     window.currentCounters = { doc: 1, ref: 1 }; // Cache counter sementara
 
     const initApp = async () => {
         try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
+            await signInAnonymously(auth);
         } catch (error) {
             console.error("Auth Error:", error);
-            Swal.fire('Auth Error', 'Gagal login anonim ke Firebase. Pastikan "Anonymous Auth" diaktifkan di Firebase Console.', 'error');
+            Swal.fire('Auth Error', 'Gagal login anonim. Pastikan "Anonymous Auth" aktif di Firebase Console -> Authentication.', 'error');
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 setupRealtimeListener();
-                // Load nomor otomatis saat pertama kali buka
                 fetchAllAutoNumbers();
             }
         });
     };
+
+    function showRulesHelp() {
+        Swal.fire({
+            title: 'Akses Ditolak!',
+            icon: 'error',
+            html: `
+                <p class="text-start small">Database Firebase menolak koneksi. Ini normal jika Anda baru membuat project.</p>
+                <p class="text-start small">Silakan buka <b>Firebase Console > Firestore Database > Rules</b>, lalu copy-paste kode ini:</p>
+                <div class="bg-light p-2 border text-start" style="font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+                    rules_version = '2';<br>
+                    service cloud.firestore {<br>
+                    &nbsp;&nbsp;match /databases/{database}/documents {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;}<br>
+                    }
+                </div>
+            `,
+            width: '600px'
+        });
+    }
 
     function setupRealtimeListener() {
         onSnapshot(productCol, (snapshot) => {
@@ -547,13 +561,11 @@
             refreshAllDropdowns();
         }, (error) => {
             console.error("Error detail:", error);
-            let msg = 'Gagal memuat data.';
             if (error.code === 'permission-denied') {
-                msg = 'Izin ditolak. Pastikan "Anonymous Auth" aktif di Firebase Console & Rules diatur ke Test Mode.';
-            } else if (error.code === 'unavailable') {
-                msg = 'Layanan Firestore sedang offline atau koneksi internet terputus.';
+                showRulesHelp();
+                const tableBody = document.getElementById('masterTableBody');
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4"><strong>Akses Ditolak (Rules)</strong><br>Silakan ikuti petunjuk di popup.</td></tr>`;
             }
-            Swal.fire('Koneksi Error', msg + ' (' + error.code + ')', 'error');
         });
     }
 
@@ -620,7 +632,7 @@
         } catch (error) {
             console.error("Gagal mengambil nomor otomatis:", error);
             if (error.code === 'permission-denied') {
-                // Jangan spam alert, cukup log
+                showRulesHelp(); // Tampilkan bantuan jika ditolak
             }
         }
     }
@@ -674,7 +686,7 @@
             const dataToSave = { sku, description, priceMKI, priceCustomer };
             
             if (id) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id);
+                const docRef = doc(db, 'products', id);
                 await updateDoc(docRef, dataToSave);
                 Swal.fire('Sukses', 'Data berhasil diperbarui', 'success');
             } else {
@@ -687,7 +699,7 @@
             modal.hide();
         } catch (error) {
             console.error(error);
-            Swal.fire('Error', 'Gagal menyimpan data: ' + error.code + '. Pastikan Firestore Rules mengizinkan.', 'error');
+            Swal.fire('Error', 'Gagal menyimpan: ' + error.code, 'error');
         } finally {
             toggleLoading(false);
         }
@@ -706,7 +718,7 @@
         if (result.isConfirmed) {
             toggleLoading(true);
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id);
+                const docRef = doc(db, 'products', id);
                 await deleteDoc(docRef);
                 Swal.fire('Terhapus!', 'Data telah dihapus.', 'success');
             } catch (error) {
