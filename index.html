@@ -170,8 +170,30 @@
             display: none; justify-content: center; align-items: center; flex-direction: column;
         }
 
-        /* PDF Styles - Hidden from view */
-        #pdf-container { display: none; }
+        /* ============================ */
+        /* PDF TEMPLATE STYLE (SESUAI REQUEST) */
+        /* ============================ */
+        #pdf-template {
+            display: none; /* Sembunyikan dari web, hanya untuk print */
+            width: 800px;
+            background: white;
+            padding: 40px;
+            font-family: sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+        
+        .header-table { width: 100%; border-bottom: 2px solid #b4975a; margin-bottom: 20px; padding-bottom: 10px; }
+        .logo-text { color: #b4975a; font-weight: bold; font-size: 18pt; margin-bottom: 2px; }
+        .sub-logo { font-size: 8pt; font-weight: bold; color: #333; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .pdf-address { font-size: 8pt; line-height: 1.3; color: #555; }
+        .pdf-title { font-size: 16pt; font-weight: bold; margin-top: 10px; margin-bottom: 20px; }
+        .info-table { width: 100%; font-size: 9pt; margin-bottom: 20px; }
+        
+        /* Items Table */
+        .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px; }
+        .items-table th { background-color: #f8f8f8; border: 1px solid #000; padding: 6px; text-align: center; }
+        .items-table td { padding: 5px; border: 1px solid #000; }
     </style>
 </head>
 <body>
@@ -192,6 +214,10 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="so-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('so')"><i class="bi bi-box-seam me-2"></i>Surat Order</button>
+            </li>
+            <!-- NEW TAB: LAPORAN -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="report-tab" data-bs-toggle="tab" data-bs-target="#report-pane" type="button" role="tab"><i class="bi bi-journal-text me-2"></i>Laporan</button>
             </li>
         </ul>
     </div>
@@ -274,8 +300,8 @@
                 </div>
             </div>
 
-            <!-- Area yang akan di-Print/PDF -->
-            <div id="printArea">
+            <!-- Area Input Form (Tidak dicetak langsung) -->
+            <div id="formInputArea">
                 <!-- Header Dokumen (Logo & Info) -->
                 <div class="card-pro">
                     <div class="card-header-pro"><i class="bi bi-building me-2"></i> Header Dokumen</div>
@@ -343,6 +369,18 @@
                             </div>
                             <!-- END AUTO NUMBER -->
 
+                            <!-- FITUR BARU: UPLOAD BUKTI TRANSFER (KHUSUS SO) -->
+                            <div class="col-12 mt-3" id="divProofUpload" style="display: none;">
+                                <div class="p-3 border rounded bg-light border-primary">
+                                    <label class="form-label fw-bold text-primary"><i class="bi bi-upload me-1"></i> Bukti Transfer / Lampiran (Khusus SO)</label>
+                                    <input type="file" class="form-control" id="proofUpload" accept="image/*">
+                                    <div class="form-text text-muted small">
+                                        <i class="bi bi-info-circle-fill text-warning"></i> Upload lampiran akan mengubah status laporan menjadi <b>LUNAS</b>. Maksimal ukuran file 500KB.
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END UPLOAD BUKTI -->
+
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal</label>
                                 <input type="date" class="form-control" id="docDate" onchange="onDateChanged()">
@@ -385,15 +423,138 @@
                     </div>
                 </div>
             </div>
-            <!-- End Print Area -->
-
+            
             <div class="mb-5">
-                <button type="button" class="btn btn-main" onclick="generatePDF()">
+                <button type="button" class="btn btn-main" onclick="generateAndSave()">
                     <i class="bi bi-file-earmark-pdf me-2"></i> Simpan & Download PDF
                 </button>
             </div>
         </div>
 
+        <!-- ============================================= -->
+        <!-- TAB 4: LAPORAN (NEW)                          -->
+        <!-- ============================================= -->
+        <div class="tab-pane fade" id="report-pane" role="tabpanel">
+            <div class="card-pro">
+                <div class="card-header-pro">
+                    <span><i class="bi bi-journal-text me-2"></i> Riwayat Transaksi (Invoice & SO)</span>
+                    <button class="btn btn-sm btn-secondary" onclick="loadReports()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                </div>
+                <div class="card-body-pro">
+                    <div class="table-responsive">
+                        <!-- TABEL LAPORAN DIPERBARUI DENGAN TFOOT & STATUS -->
+                        <table class="table table-hover align-middle table-bordered" style="font-size: 0.85rem;">
+                            <thead class="table-light">
+                                <tr class="text-center">
+                                    <th>Tanggal</th>
+                                    <th>No Invoice</th>
+                                    <th>No SO</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th class="table-primary">Total MKI</th>
+                                    <th class="table-info">Total Customer</th>
+                                    <th class="table-secondary">PPN 11%</th>
+                                    <th class="table-success">Margin</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody">
+                                <tr><td colspan="10" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
+                            </tbody>
+                            <tfoot id="reportTableFoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- HIDDEN PDF TEMPLATE (SESUAI REQUEST)          -->
+<!-- ============================================= -->
+<div id="pdf-template">
+    <table class="header-table">
+        <tr>
+            <td width="90" valign="top">
+                <img id="pdfLogoImg" src="" style="width: 80px; height: auto; display: none;">
+                <div id="pdfLogoPlaceholder" style="font-weight:bold; font-size:24px; color:#b4975a; display:none;">M</div>
+            </td>
+            <td valign="top">
+                <div class="logo-text">KAWAN MKI</div>
+                <div class="sub-logo">KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA</div>
+                <div class="pdf-address">
+                    PT Mitra Kiara Indonesia Jl. Raya Narogong KM 7 Kp. Narogong,<br>
+                    Kembang Kuning, Klapanunggal, Kab. Bogor, Jawa Barat, 16872<br>
+                    Telp: +6285717050604 | Email: abi@mitrakiaraindonesia.com
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="pdf-title" id="pdfDocTitle">Surat Order</div>
+
+    <table style="width: 100%; margin-bottom: 20px;">
+        <tr>
+            <td width="60%" valign="top">
+                <strong>Customer:</strong><br><br>
+                <div id="pdfCustomer"></div>
+                <div id="pdfCompany" style="color: #666; font-size: 9pt; margin-top: 2px;"></div>
+                <div id="pdfAddress" style="font-size: 8pt; margin-top: 5px; width: 85%; line-height: 1.4;"></div>
+            </td>
+            <td width="40%" valign="top">
+                <table class="info-table">
+                    <!-- Baris ini akan diatur via JS sesuai tipe dokumen -->
+                    <tbody id="pdfInfoTableBody"></tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th width="15%">Kode</th>
+                <th width="35%">Desc</th>
+                <th width="10%">Qty</th>
+                <th width="20%">Harga</th>
+                <th width="20%">Jumlah</th>
+            </tr>
+        </thead>
+        <tbody id="pdfTableBody">
+            <!-- Items diisi via JS -->
+        </tbody>
+    </table>
+
+    <div id="pdfFooterInfo" style="font-size:8pt;margin-top:5px;font-style:italic;">
+        <!-- Keterangan Transfer / Remarks diisi via JS -->
+    </div>
+
+    <!-- FORMAT TANDA TANGAN BARU (Rata Kanan) -->
+    <div style="width: 100%; margin-top: 50px; text-align: right;">
+        <div style="display: inline-block; width: 350px; text-align: center;">
+            <div style="text-align: center; margin-bottom: 5px; font-size: 10pt;">Dengan Hormat,</div>
+            <div style="height: 1px; padding-top: 60px;"></div> <!-- Spasi Tanda Tangan -->
+            <hr style="width: 100%; margin: 0 auto; border: 0; border-top: 1px solid #000000; height: 1px;">
+            <strong style="display: block; margin-top: 5px; font-size: 9pt; font-family: sans-serif; line-height: 1.3;">KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA</strong>
+        </div>
+    </div>
+</div>
+<!-- END PDF TEMPLATE -->
+
+<!-- Modal View Bukti -->
+<div class="modal fade" id="viewProofModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bukti Transfer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center bg-light">
+                <img id="proofImagePreview" src="" class="img-fluid rounded shadow-sm" alt="Bukti Transfer">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -443,7 +604,7 @@
 <!-- FIREBASE SDK (Modular) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, getDoc, setDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     // 1. Firebase Configuration (GUNAKAN CONFIG USER LANGSUNG)
@@ -462,6 +623,7 @@
     
     // Path Collection SEDERHANA (ROOT) untuk menghindari permission error
     const productCol = collection(db, 'products');
+    const transactionCol = collection(db, 'transactions'); // New Collection for Reports
     const countersPath = 'counters'; 
 
     window.localProducts = [];
@@ -478,6 +640,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 setupRealtimeListener();
+                setupReportListener(); // Listen to reports
                 fetchAllAutoNumbers();
             }
         });
@@ -504,6 +667,109 @@
             width: '600px'
         });
     }
+
+    // --- REPORT LISTENER ---
+    function setupReportListener() {
+        // Query sederhana tanpa orderBy untuk menghindari kebutuhan index di awal
+        onSnapshot(transactionCol, (snapshot) => {
+            const tableBody = document.getElementById('reportTableBody');
+            const tableFoot = document.getElementById('reportTableFoot');
+            
+            if (snapshot.empty) {
+                tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Belum ada riwayat transaksi.</td></tr>';
+                if(tableFoot) tableFoot.innerHTML = '';
+                return;
+            }
+
+            // Client-side sorting (descending date)
+            const docs = [];
+            snapshot.forEach(doc => docs.push(doc.data()));
+            docs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Variabel untuk Grand Total
+            let sumMKI = 0;
+            let sumCust = 0;
+            let sumPPN = 0;
+            let sumMargin = 0;
+
+            tableBody.innerHTML = '';
+            docs.forEach(data => {
+                // Handle old data structure safely
+                const tMKI = parseFloat(data.totalMKI) || 0;
+                const tCust = parseFloat(data.totalCust) || 0;
+                const tPPN = parseFloat(data.ppn) || 0;
+                const tMargin = parseFloat(data.margin) || 0;
+
+                // Akumulasi Total
+                sumMKI += tMKI;
+                sumCust += tCust;
+                sumPPN += tPPN;
+                sumMargin += tMargin;
+
+                // Logic Status Lunas
+                let statusBadge = '<span class="badge bg-secondary">Menunggu</span>';
+                let actionBtn = '-';
+                
+                if (data.status === 'Lunas') {
+                    statusBadge = '<span class="badge bg-success">LUNAS</span>';
+                    // Tombol Lihat Bukti
+                    if(data.proofImage) {
+                        actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="viewProof('${data.docNumber}')">Bukti</button>`;
+                        // Simpan sementara di window untuk akses modal
+                        if(!window.proofs) window.proofs = {};
+                        window.proofs[data.docNumber] = data.proofImage;
+                    }
+                }
+
+                const row = `
+                    <tr>
+                        <td class="text-nowrap">${data.date}</td>
+                        <td class="fw-bold">${data.noInvoice || '-'}</td>
+                        <td class="fw-bold">${data.noSO || '-'}</td>
+                        <td>${data.customer}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end text-primary">${formatRp(tMKI)}</td>
+                        <td class="text-end text-info">${formatRp(tCust)}</td>
+                        <td class="text-end text-secondary">${formatRp(tPPN)}</td>
+                        <td class="text-end text-success fw-bold">${formatRp(tMargin)}</td>
+                        <td class="text-center">${actionBtn}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            // Update Footer dengan Grand Total
+            if(tableFoot) {
+                tableFoot.innerHTML = `
+                    <tr class="table-secondary fw-bold" style="border-top: 2px solid #aaa;">
+                        <td colspan="5" class="text-center">GRAND TOTAL</td>
+                        <td class="text-end text-primary">${formatRp(sumMKI)}</td>
+                        <td class="text-end text-info">${formatRp(sumCust)}</td>
+                        <td class="text-end text-secondary">${formatRp(sumPPN)}</td>
+                        <td class="text-end text-success">${formatRp(sumMargin)}</td>
+                        <td></td>
+                    </tr>
+                `;
+            }
+
+        }, (error) => {
+            console.error("Report Listener Error:", error);
+        });
+    }
+    
+    // Fungsi Lihat Bukti di Modal
+    window.viewProof = (docId) => {
+        const imgData = window.proofs[docId];
+        if(imgData) {
+            document.getElementById('proofImagePreview').src = imgData;
+            const modal = new bootstrap.Modal(document.getElementById('viewProofModal'));
+            modal.show();
+        }
+    };
+
+    window.loadReports = function() {
+        console.log("Refreshing reports...");
+    };
 
     function setupRealtimeListener() {
         onSnapshot(productCol, (snapshot) => {
@@ -573,13 +839,11 @@
     // LOGIC: AUTO NUMBERING SYSTEM (NEW)
     // ==========================================
 
-    // Helper untuk format angka (padZero)
     const pad = (num, size) => {
         let s = "000000000" + num;
         return s.substr(s.length - size);
     }
 
-    // Mendapatkan Tanggal & Formatnya
     const getDateParts = () => {
         const dateInput = document.getElementById('docDate').value;
         const date = dateInput ? new Date(dateInput) : new Date();
@@ -589,10 +853,9 @@
         return { year, yearShort, month };
     }
 
-    // 1. Fungsi Mengambil Nomor Berikutnya (Read Only)
     window.fetchAllAutoNumbers = async () => {
-        await getAutoNumber('invoice'); // Untuk Nomor Invoice (Format SO)
-        await getAutoNumber('ref_so');  // Untuk Referensi SO (Format PRO-KOPKAR)
+        await getAutoNumber('invoice'); 
+        await getAutoNumber('ref_so');
     }
 
     window.refreshAutoNumber = async (type) => {
@@ -600,31 +863,26 @@
         await getAutoNumber(key);
     }
 
-    // Mengambil data dari Firestore
     async function getAutoNumber(type) {
         const { year, yearShort, month } = getDateParts();
-        const docId = `counter_${type}_${year}_${month}`; // Reset setiap bulan karena ID mengandung Bulan
+        const docId = `counter_${type}_${year}_${month}`; 
         
         try {
             const docRef = doc(db, countersPath, docId);
             const docSnap = await getDoc(docRef);
             
-            let currentSequence = 1; // Default mulai dari 1
+            let currentSequence = 1; 
             if (docSnap.exists()) {
-                currentSequence = docSnap.data().lastSequence + 1; // Ambil nomor terakhir + 1
+                currentSequence = docSnap.data().lastSequence + 1; 
             }
             
-            // Simpan di global variable untuk digunakan saat save
             if(type === 'invoice') window.currentCounters.doc = currentSequence;
             if(type === 'ref_so') window.currentCounters.ref = currentSequence;
 
-            // Update UI Input
             if (type === 'invoice') {
-                // Format: SO/0008/12/25 (4 digit urut, bulan, tahun pendek)
                 const formatted = `SO/${pad(currentSequence, 4)}/${month}/${yearShort}`;
                 document.getElementById('docNumber').value = formatted;
             } else if (type === 'ref_so') {
-                // Format: PRO-KOPKAR/08/12/2025 (2 digit urut, bulan, tahun panjang)
                 const formatted = `PRO-KOPKAR/${pad(currentSequence, 2)}/${month}/${year}`;
                 document.getElementById('soReference').value = formatted;
             }
@@ -632,23 +890,98 @@
         } catch (error) {
             console.error("Gagal mengambil nomor otomatis:", error);
             if (error.code === 'permission-denied') {
-                showRulesHelp(); // Tampilkan bantuan jika ditolak
+                showRulesHelp(); 
             }
         }
     }
 
-    // 2. Fungsi Update Counter (+1) saat klik Save/Download
-    window.incrementCountersInDB = async () => {
+    // HELPER: Convert File to Base64 (Untuk Upload)
+    const getBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Fungsi Gabungan: Save Transaction + Update Counter + Generate PDF
+    window.saveAndRecordTransaction = async () => {
         const { year, month } = getDateParts();
         
-        // Update Counter Invoice/SO (Doc Number)
+        // HITUNG TOTAL MKI & TOTAL CUSTOMER DI BELAKANG LAYAR
+        let totalMKI = 0;
+        let totalCust = 0;
+
+        document.querySelectorAll('#transactionBody tr').forEach(row => {
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const select = row.querySelector('.item-sku');
+            const option = select.options[select.selectedIndex];
+            const pMKI = parseFloat(option.getAttribute('data-price-mki')) || 0;
+            const pCust = parseFloat(option.getAttribute('data-price-cust')) || 0;
+            
+            totalMKI += (qty * pMKI);
+            totalCust += (qty * pCust);
+        });
+
+        const ppn = totalCust * 0.11;
+        const margin = totalCust - totalMKI;
+
+        const docNumber = document.getElementById('docNumber').value;
+        const soRef = document.getElementById('soReference').value;
+        let noInvoice = '-';
+        let noSO = '-';
+
+        if(currentFormType === 'proforma') {
+            noInvoice = docNumber;
+            noSO = soRef;
+        } else {
+            noSO = docNumber;
+        }
+
+        const customer = document.getElementById('customerName').value;
+        
+        // --- LOGIKA UPLOAD BUKTI (KHUSUS SO) ---
+        let paymentStatus = 'Menunggu'; 
+        let proofBase64 = null;
+
+        if (currentFormType === 'so') {
+            const fileInput = document.getElementById('proofUpload');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > 500000) { 
+                    Swal.fire('Error', 'Ukuran file bukti terlalu besar (Max 500KB). Silakan kompres gambar.', 'error');
+                    throw new Error('File too large');
+                }
+                proofBase64 = await getBase64(file);
+                paymentStatus = 'Lunas'; 
+            }
+        }
+
+        // 1. Simpan Laporan ke Firestore 'transactions'
+        const transData = {
+            date: document.getElementById('docDate').value,
+            type: currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order',
+            noInvoice: noInvoice,
+            noSO: noSO,
+            customer: customer,
+            totalMKI: totalMKI,
+            totalCust: totalCust,
+            ppn: ppn,
+            margin: margin,
+            status: paymentStatus, 
+            proofImage: proofBase64, 
+            docNumber: docNumber, // ID Utama untuk referensi
+            createdAt: new Date().toISOString()
+        };
+        await addDoc(transactionCol, transData);
+
+        // 2. Update Counter
         const invId = `counter_invoice_${year}_${month}`;
         await setDoc(doc(db, countersPath, invId), { 
             lastSequence: window.currentCounters.doc 
         });
 
-        // Update Counter Ref SO - HANYA JIKA MODE PROFORMA
-        // Karena di mode SO, field ini disembunyikan dan tidak dipakai
         if (currentFormType === 'proforma') {
             const refId = `counter_ref_so_${year}_${month}`;
             await setDoc(doc(db, countersPath, refId), { 
@@ -656,11 +989,13 @@
             });
         }
         
-        // Refresh nomor untuk sesi berikutnya (agar nambah lagi)
+        // Reset File Input
+        if (document.getElementById('proofUpload')) document.getElementById('proofUpload').value = '';
+
+        // Refresh nomor
         setTimeout(fetchAllAutoNumbers, 1000);
     }
 
-    // 3. Trigger saat tanggal berubah (agar nomor menyesuaikan bulan)
     window.onDateChanged = () => {
         fetchAllAutoNumbers();
     }
@@ -825,6 +1160,7 @@
         const refLbl = document.getElementById('lblRefNumber');
         const badge = document.getElementById('priceInfoBadge');
         const divSoRef = document.getElementById('divSoRef'); // Element Wrapper
+        const divProofUpload = document.getElementById('divProofUpload'); // Upload Area
         
         if(type === 'proforma') {
             titleEl.innerHTML = '<span class="text-info">Proforma Invoice</span> Generator';
@@ -833,6 +1169,8 @@
             badge.innerHTML = '<i class="bi bi-info-circle"></i> Menggunakan Harga Customer (Proforma)';
             // Show Ref SO
             if(divSoRef) divSoRef.style.display = 'block';
+            // Hide Upload Bukti (Hanya untuk SO)
+            if(divProofUpload) divProofUpload.style.display = 'none';
         } else {
             titleEl.innerHTML = '<span class="text-primary">Surat Order</span> Generator';
             refLbl.innerText = 'Nomor SO';
@@ -840,6 +1178,8 @@
             badge.innerHTML = '<i class="bi bi-info-circle"></i> Menggunakan Harga MKI (Surat Order)';
             // Hide Ref SO
             if(divSoRef) divSoRef.style.display = 'none';
+            // Show Upload Bukti (Khusus SO)
+            if(divProofUpload) divProofUpload.style.display = 'block';
         }
 
         // Update harga di row yang sudah ada
@@ -881,12 +1221,12 @@
         let options = '<option value="" disabled selected>Pilih Barang...</option>';
         if (window.localProducts && window.localProducts.length > 0) {
             window.localProducts.forEach(p => {
-                // Simpan KEDUA harga di atribut
+                // MODIFIKASI: Hanya menampilkan SKU di opsi dropdown (tanpa deskripsi)
                 options += `<option value="${p.sku}" 
                             data-desc="${p.description}" 
                             data-price-mki="${p.priceMKI}"
                             data-price-cust="${p.priceCustomer}">
-                            ${p.sku} - ${p.description}
+                            ${p.sku}
                             </option>`;
             });
         }
@@ -913,11 +1253,12 @@
             let options = '<option value="" disabled selected>Pilih Barang...</option>';
             if (window.localProducts) {
                 window.localProducts.forEach(p => {
+                    // MODIFIKASI: Hanya menampilkan SKU di opsi dropdown
                     options += `<option value="${p.sku}" 
                                 data-desc="${p.description}" 
                                 data-price-mki="${p.priceMKI}"
                                 data-price-cust="${p.priceCustomer}">
-                                ${p.sku} - ${p.description}
+                                ${p.sku}
                                 </option>`;
                 });
             }
@@ -989,7 +1330,8 @@
         }
     }
 
-    function generatePDF() {
+    // Fungsi Utama: Generate PDF dan Simpan Data
+    function generateAndSave() {
         const element = document.getElementById('printArea');
         const company = document.getElementById('companyName').value;
         if(!company) {
@@ -999,65 +1341,102 @@
 
         toggleLoading(true);
 
-        // UPDATE COUNTER DI DATABASE SEBELUM PRINT
-        // Ini memastikan nomor bertambah untuk dokumen berikutnya
-        if(window.incrementCountersInDB) {
-            window.incrementCountersInDB(); 
+        // Copy data form ke PDF Template
+        document.getElementById('pdfLogoImg').src = logoBase64 || "";
+        document.getElementById('pdfLogoImg').style.display = logoBase64 ? 'block' : 'none';
+        document.getElementById('pdfLogoPlaceholder').style.display = logoBase64 ? 'none' : 'block';
+        
+        document.getElementById('pdfDocTitle').innerText = currentFormType === 'proforma' ? 'PROFORMA INVOICE' : 'SURAT ORDER';
+        
+        // Pilihan No Dokumen berdasarkan Tipe
+        let docNo = document.getElementById('docNumber').value;
+        let infoTableBody = '';
+
+        if (currentFormType === 'proforma') {
+            // Proforma: No Invoice, Tanggal, Jatuh Tempo, No PO (Ref)
+            infoTableBody = `
+                <tr><td width="80"><strong>No Invoice</strong></td><td>: ${docNo}</td></tr>
+                <tr><td><strong>Tanggal</strong></td><td>: ${document.getElementById('docDate').value}</td></tr>
+                <tr><td><strong>Jatuh Tempo</strong></td><td>: ${document.getElementById('dueDate').value}</td></tr>
+                <tr><td><strong>No PO</strong></td><td>: ${document.getElementById('soReference').value}</td></tr>
+            `;
+        } else {
+            // SO: Tanggal, Jatuh Tempo, Referensi (No SO)
+            infoTableBody = `
+                <tr><td width="80"><strong>Tanggal</strong></td><td>: ${document.getElementById('docDate').value}</td></tr>
+                <tr><td><strong>Jatuh Tempo</strong></td><td>: ${document.getElementById('dueDate').value}</td></tr>
+                <tr><td><strong>Referensi</strong></td><td>: ${docNo}</td></tr>
+            `;
         }
+        document.getElementById('pdfInfoTableBody').innerHTML = infoTableBody;
 
-        const opt = {
-            margin:       [10, 10, 20, 10], 
-            filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+        document.getElementById('pdfCompany').innerText = company;
+        document.getElementById('pdfCustomer').innerText = document.getElementById('customerName').value;
+        document.getElementById('pdfAddress').innerText = document.getElementById('address').value;
+        
+        // Grand Total PDF
+        document.getElementById('pdfGrandTotal').innerText = document.getElementById('grandTotal').innerText;
 
-        const clone = element.cloneNode(true);
-        
-        // Hapus tombol-tombol yang tidak perlu di PDF
-        clone.querySelectorAll('.no-print').forEach(el => el.remove());
-        
-        // Ubah input menjadi text biasa agar rapi
-        clone.querySelectorAll('.form-control, .form-select').forEach(el => {
-            const val = el.value;
-            const span = document.createElement('div');
-            span.innerText = val;
-            span.style.fontWeight = "500";
-            span.style.padding = "5px 0";
-            // Khusus nomor dokumen dibuat tebal
-            if(el.id === 'docNumber' || el.id === 'soReference') {
-                span.style.fontWeight = "bold";
+        // Copy Tabel Barang ke PDF
+        const pdfBody = document.getElementById('pdfTableBody');
+        pdfBody.innerHTML = '';
+        document.querySelectorAll('#transactionBody tr').forEach(row => {
+            const sku = row.querySelector('.item-sku').value;
+            const desc = row.querySelector('.item-desc').value;
+            const qty = row.querySelector('.item-qty').value;
+            const price = row.querySelector('.item-price').value;
+            const total = row.querySelector('.item-total').value;
+            
+            if(sku) {
+                const newRow = `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 5px;">${sku}</td>
+                        <td style="border: 1px solid #000; padding: 5px;">${desc}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${qty}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatRp(price)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${total}</td>
+                    </tr>
+                `;
+                pdfBody.innerHTML += newRow;
             }
-            el.parentNode.replaceChild(span, el);
-        });
-        
-        clone.querySelectorAll('.card-pro').forEach(card => {
-            card.style.border = "none";
-            card.style.boxShadow = "none";
-            card.style.marginBottom = "10px";
-        });
-        clone.querySelectorAll('.card-header-pro').forEach(head => {
-            head.style.background = "white";
-            head.style.borderBottom = "2px solid #000";
-            head.style.paddingLeft = "0";
-            head.style.color = "black";
-        });
-        clone.querySelectorAll('.card-body-pro').forEach(body => {
-            body.style.padding = "10px 0";
         });
 
-        const headerTitle = document.createElement('h1');
-        headerTitle.innerText = currentFormType === 'proforma' ? 'PROFORMA INVOICE' : 'SURAT ORDER';
-        headerTitle.style.textAlign = 'center';
-        headerTitle.style.marginBottom = '20px';
-        headerTitle.style.color = '#333';
-        clone.prepend(headerTitle);
+        // Set Footer Info (Remarks / Bank)
+        let footerInfo = '';
+        if(currentFormType === 'so') {
+            footerInfo = `<strong>Remarks:</strong><br>- Retail<br>- Incoterm FOT<br>- Exclude Tax`;
+        } else {
+            footerInfo = `<strong>Mohon melakukan transfer pembayaran ke rekening:</strong><br>- No. Rekening : 5885005006<br>- Bank : BNI - Cab. The East Mega Kuningan Jakarta<br>- Atas Nama : KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA`;
+        }
+        document.getElementById('pdfFooterInfo').innerHTML = footerInfo;
 
-        html2pdf().set(opt).from(clone).save().then(() => {
-            toggleLoading(false);
-            Swal.fire('Sukses', 'PDF Berhasil didownload & Nomor Urut Diperbarui', 'success');
-        });
+        // Tampilkan template sebentar
+        const template = document.getElementById('pdf-template');
+        template.style.display = 'block';
+
+        // PANGGIL FUNGSI SIMPAN DB SEBELUM PRINT
+        if(window.saveAndRecordTransaction) {
+            window.saveAndRecordTransaction().then(() => {
+                const opt = {
+                    margin:       [10, 10, 10, 10], 
+                    filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(template).save().then(() => {
+                    template.style.display = 'none'; // Sembunyikan lagi
+                    toggleLoading(false);
+                    Swal.fire('Sukses', 'Data tersimpan & PDF berhasil didownload', 'success');
+                });
+            }).catch(err => {
+                template.style.display = 'none';
+                toggleLoading(false);
+                console.error(err);
+                Swal.fire('Error', 'Gagal menyimpan data transaksi: ' + err.message, 'error');
+            });
+        }
     }
 
 </script>
