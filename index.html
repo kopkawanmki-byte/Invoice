@@ -1297,6 +1297,10 @@
             return;
         }
 
+        // Add Loading Text
+        const loadingText = document.querySelector('.loading-overlay span');
+        if(loadingText) loadingText.innerText = "Memproses Gambar...";
+        
         toggleLoading(true);
 
         // --- 1. PROSES FILE & STATUS ---
@@ -1400,15 +1404,20 @@
         template.style.display = 'block';
 
         // --- 3. SIMPAN DATA REKAP KE DB ---
+        if(loadingText) loadingText.innerText = "Menyimpan Data ke Server...";
+        
         if(window.saveAndRecordTransaction) {
             // Panggil fungsi simpan dengan status yang sudah ditentukan
             window.saveAndRecordTransaction(paymentStatus).then(() => {
+                
+                if(loadingText) loadingText.innerText = "Membuat Halaman PDF...";
+                
                 // --- 4. GENERATE PDF ---
                 const opt = {
                     margin:       [10, 10, 10, 10], 
                     filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true },
+                    image:        { type: 'jpeg', quality: 0.90 }, // Lower quality slightly
+                    html2canvas:  { scale: 2, useCORS: true, logging: false }, 
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
