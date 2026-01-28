@@ -171,29 +171,62 @@
         }
 
         /* ============================ */
-        /* PDF TEMPLATE STYLE (SESUAI REQUEST) */
+        /* PDF TEMPLATE STYLE (FIXED)   */
         /* ============================ */
         #pdf-template {
-            display: none; /* Sembunyikan dari web, hanya untuk print */
-            width: 800px;
+            display: none; /* Sembunyikan secara default */
+            
+            width: 750px; 
             background: white;
-            padding: 40px;
-            font-family: sans-serif;
+            padding: 40px 50px; 
+            font-family: 'Inter', sans-serif; /* Menggunakan font Inter agar lebih tajam di layar */
             font-size: 10pt;
-            color: #333;
+            color: #000000; /* Hitam pekat */
+            line-height: 1.3;
+            box-sizing: border-box;
+            /* Anti-aliasing untuk teks lebih tajam */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
-        .header-table { width: 100%; border-bottom: 2px solid #b4975a; margin-bottom: 20px; padding-bottom: 10px; }
-        .logo-text { color: #b4975a; font-weight: bold; font-size: 18pt; margin-bottom: 2px; }
-        .sub-logo { font-size: 8pt; font-weight: bold; color: #333; margin-bottom: 5px; letter-spacing: 0.5px; }
-        .pdf-address { font-size: 8pt; line-height: 1.3; color: #555; }
-        .pdf-title { font-size: 16pt; font-weight: bold; margin-top: 10px; margin-bottom: 20px; }
-        .info-table { width: 100%; font-size: 9pt; margin-bottom: 20px; }
+        /* HEADER */
+        .header-table { 
+            width: 100%; 
+            margin-bottom: 20px; 
+            padding-bottom: 10px; 
+            border-bottom: 3px solid #b4975a; 
+        }
         
-        /* Items Table */
-        .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px; }
-        .items-table th { background-color: #f8f8f8; border: 1px solid #000; padding: 6px; text-align: center; }
-        .items-table td { padding: 5px; border: 1px solid #000; }
+        .logo-text { color: #b4975a; font-weight: 800; font-size: 18pt; margin-bottom: 2px; }
+        .sub-logo { font-size: 9pt; font-weight: 700; color: #000; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .pdf-address { font-size: 9pt; line-height: 1.3; color: #000; }
+        
+        .pdf-title { 
+            font-size: 14pt; 
+            font-weight: 800; 
+            margin-top: 10px; 
+            margin-bottom: 20px; 
+            color: #000;
+        }
+        
+        .info-table { width: 100%; font-size: 9pt; margin-bottom: 20px; border-collapse: collapse; }
+        .info-table td { padding: 3px 5px; vertical-align: top; color: #000; }
+        
+        /* Items Table - Full Borders & Tajam */
+        .items-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 10px; margin-top: 10px; }
+        .items-table th { 
+            background-color: #ffffff; 
+            border: 1px solid #000; /* Garis hitam solid */
+            padding: 8px; 
+            text-align: center; 
+            font-weight: 700;
+            color: #000;
+        }
+        .items-table td { 
+            padding: 8px; 
+            border: 1px solid #000; /* Garis hitam solid */
+            color: #000;
+        }
 
         /* Page Break untuk Lampiran */
         .page-break { page-break-before: always; }
@@ -495,19 +528,18 @@
         </tr>
     </table>
 
-    <div class="pdf-title" id="pdfDocTitle">Surat Order</div>
+    <div class="pdf-title" id="pdfDocTitle">Proforma Invoice</div>
 
     <table style="width: 100%; margin-bottom: 20px;">
         <tr>
-            <td width="60%" valign="top">
+            <td width="55%" valign="top">
                 <strong>Customer:</strong><br><br>
-                <div id="pdfCustomer"></div>
-                <div id="pdfCompany" style="color: #666; font-size: 9pt; margin-top: 2px;"></div>
-                <div id="pdfAddress" style="font-size: 8pt; margin-top: 5px; width: 85%; line-height: 1.4;"></div>
+                <div id="pdfCustomer" style="font-weight: bold; margin-bottom: 5px;"></div>
+                <div id="pdfCompany" style="font-weight: bold; margin-bottom: 5px;"></div>
+                <div id="pdfAddress" style="font-size: 9pt; width: 90%; line-height: 1.4;"></div>
             </td>
-            <td width="40%" valign="top">
+            <td width="45%" valign="top">
                 <table class="info-table">
-                    <!-- Baris ini akan diatur via JS sesuai tipe dokumen -->
                     <tbody id="pdfInfoTableBody"></tbody>
                 </table>
             </td>
@@ -529,15 +561,16 @@
         </tbody>
     </table>
 
-    <div id="pdfFooterInfo" style="font-size:8pt;margin-top:5px;font-style:italic;">
-        <!-- Keterangan Transfer / Remarks diisi via JS -->
+    <!-- INFO TRANSFER (Di Kiri, Kecil, Bold Italic) -->
+    <div id="pdfFooterInfo" style="font-size:8pt; margin-top:30px; font-style: italic; text-align: left;">
+        <!-- Diisi JS -->
     </div>
 
-    <!-- FORMAT TANDA TANGAN BARU (Rata Kanan) -->
+    <!-- FORMAT TANDA TANGAN (Di Kanan) -->
     <div style="width: 100%; margin-top: 50px; text-align: right;">
         <div style="display: inline-block; width: 350px; text-align: center;">
-            <div style="text-align: center; margin-bottom: 5px; font-size: 10pt;">Dengan Hormat,</div>
-            <div style="height: 1px; padding-top: 60px;"></div> <!-- Spasi Tanda Tangan -->
+            <div style="margin-bottom: 5px; font-size: 10pt;">Dengan Hormat,</div>
+            <br><br><br><br>
             <hr style="width: 100%; margin: 0 auto; border: 0; border-top: 1px solid #000000; height: 1px;">
             <strong style="display: block; margin-top: 5px; font-size: 9pt; font-family: sans-serif; line-height: 1.3;">KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA</strong>
         </div>
@@ -809,7 +842,7 @@
     }
 
     // ==========================================
-    // LOGIC: AUTO NUMBERING SYSTEM (NEW)
+    // LOGIC: AUTO NUMBERING SYSTEM (FIXED)
     // ==========================================
 
     const pad = (num, size) => {
@@ -826,19 +859,24 @@
         return { year, yearShort, month };
     }
 
+    // Panggil saat awal load
     window.fetchAllAutoNumbers = async () => {
-        await getAutoNumber('invoice'); 
-        await getAutoNumber('ref_so');
+        // Ambil kedua tipe counter
+        await getAutoNumber('counter_so_gen'); 
+        await getAutoNumber('counter_pro_gen');
     }
 
-    window.refreshAutoNumber = async (type) => {
-        const key = type === 'doc' ? 'invoice' : 'ref_so';
-        await getAutoNumber(key);
+    // Panggil saat refresh manual
+    window.refreshAutoNumber = async (inputType) => {
+        // inputType 'doc' = input utama, 'ref' = input referensi
+        // Kita refresh semua saja biar aman
+        await fetchAllAutoNumbers();
     }
 
-    async function getAutoNumber(type) {
+    // Fungsi Generic Ambil Counter
+    async function getAutoNumber(counterKey) {
         const { year, yearShort, month } = getDateParts();
-        const docId = `counter_${type}_${year}_${month}`; 
+        const docId = `${counterKey}_${year}_${month}`; 
         
         try {
             const docRef = doc(db, countersPath, docId);
@@ -849,58 +887,40 @@
                 currentSequence = docSnap.data().lastSequence + 1; 
             }
             
-            if(type === 'invoice') window.currentCounters.doc = currentSequence;
-            if(type === 'ref_so') window.currentCounters.ref = currentSequence;
+            // Simpan sequence ke variabel global
+            if(counterKey === 'counter_so_gen') window.currentCounters.so_seq = currentSequence;
+            if(counterKey === 'counter_pro_gen') window.currentCounters.pro_seq = currentSequence;
 
-            if (type === 'invoice') {
-                const formatted = `SO/${pad(currentSequence, 4)}/${month}/${yearShort}`;
-                document.getElementById('docNumber').value = formatted;
-            } else if (type === 'ref_so') {
-                const formatted = `PRO-KOPKAR/${pad(currentSequence, 2)}/${month}/${year}`;
-                document.getElementById('soReference').value = formatted;
-            }
+            // Update UI berdasarkan sequence yang didapat
+            window.updateNumberUI();
 
         } catch (error) {
             console.error("Gagal mengambil nomor otomatis:", error);
-            if (error.code === 'permission-denied') {
-                showRulesHelp(); 
-            }
         }
     }
 
-    // HELPER: Convert File to Base64 (Untuk Upload) & Resize (Untuk Performa)
-    const getBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Resize Logic: Max width 800px untuk performa PDF
-                    const MAX_WIDTH = 800;
-                    let width = img.width;
-                    let height = img.height;
+    window.updateNumberUI = function() {
+        const { year, yearShort, month } = getDateParts();
+        
+        // Format SO: SO/0001/01/26
+        const soSeq = window.currentCounters.so_seq || 1;
+        const fmtSO = `SO/${pad(soSeq, 4)}/${month}/${yearShort}`;
+        
+        // Format PRO: PRO-KOPKAR/01/01/2026
+        const proSeq = window.currentCounters.pro_seq || 1;
+        const fmtPRO = `PRO-KOPKAR/${pad(proSeq, 2)}/${month}/${year}`;
 
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Kompresi JPEG 0.7
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-                img.onerror = (err) => reject(err);
-            };
-            reader.onerror = error => reject(error);
-        });
+        // Masukkan ke input field sesuai Mode Tab yang aktif
+        // Perhatikan ID input: 'docNumber' (Utama) dan 'soReference' (Ref)
+        
+        if (currentFormType === 'proforma') {
+            // Jika Proforma: Utama = PRO, Ref = SO
+            document.getElementById('docNumber').value = fmtPRO;
+            document.getElementById('soReference').value = fmtSO;
+        } else {
+            // Jika SO: Utama = SO
+            document.getElementById('docNumber').value = fmtSO;
+        }
     }
 
     // Fungsi Simpan Data ke Firestore (Tanpa Gambar)
@@ -957,16 +977,19 @@
         
         await addDoc(transactionCol, transData);
 
-        const invId = `counter_invoice_${year}_${month}`;
-        await setDoc(doc(db, countersPath, invId), { 
-            lastSequence: window.currentCounters.doc 
-        });
-
+        // Update Counter yang terpakai
         if (currentFormType === 'proforma') {
-            const refId = `counter_ref_so_${year}_${month}`;
-            await setDoc(doc(db, countersPath, refId), { 
-                lastSequence: window.currentCounters.ref 
-            });
+             // Update counter PRO
+             const proId = `counter_pro_gen_${year}_${month}`;
+             await setDoc(doc(db, countersPath, proId), { 
+                lastSequence: window.currentCounters.pro_seq 
+             });
+        } else {
+             // Update counter SO
+             const soId = `counter_so_gen_${year}_${month}`;
+             await setDoc(doc(db, countersPath, soId), { 
+                lastSequence: window.currentCounters.so_seq 
+             });
         }
         
         if (document.getElementById('proofUpload')) document.getElementById('proofUpload').value = '';
@@ -1054,6 +1077,41 @@
     let currentFormType = 'proforma'; 
     let logoBase64 = "";
 
+    // HELPER: Convert File to Base64 (Moved to global scope)
+    const getBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Resize Logic: Max width 800px untuk performa PDF
+                    const MAX_WIDTH = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Kompresi JPEG 0.7
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = error => reject(error);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('docDate').valueAsDate = new Date();
         document.getElementById('dueDate').valueAsDate = new Date(new Date().setDate(new Date().getDate() + 14));
@@ -1139,6 +1197,9 @@
         const divSoRef = document.getElementById('divSoRef'); 
         const divProofUpload = document.getElementById('divProofUpload'); 
         
+        // Panggil refresh untuk update format nomor di input
+        window.updateNumberUI();
+
         if(type === 'proforma') {
             titleEl.innerHTML = '<span class="text-info">Proforma Invoice</span> Generator';
             refLbl.innerText = 'Nomor Invoice';
@@ -1282,18 +1343,18 @@
 
     // Fungsi Utama: Generate PDF DULUAN, Simpan DB di Background
     async function generateAndSave() {
-        const element = document.getElementById('printArea');
         const company = document.getElementById('companyName').value;
         if(!company) {
             Swal.fire('Info', 'Mohon isi Nama Perusahaan', 'info');
             return;
         }
 
-        const loadingText = document.querySelector('.loading-overlay span');
-        if(loadingText) loadingText.innerText = "Memproses Gambar...";
-        
+        // 1. Tampilkan Loading Ringan
         toggleLoading(true);
+        const loadingText = document.querySelector('.loading-overlay span');
+        if(loadingText) loadingText.innerText = "Sedang Download...";
 
+        // 2. Siapkan Data Lampiran (Cepat)
         const fileInput = document.getElementById('proofUpload');
         let pdfAttachmentData = null;
         let paymentStatus = 'Tunggu Bayar'; 
@@ -1301,9 +1362,8 @@
         if (currentFormType === 'so' && fileInput.files.length > 0) {
             try {
                 const file = fileInput.files[0];
-                if (file.size > 1000000) { 
-                    throw new Error('Ukuran file lampiran terlalu besar (Maks 1MB).');
-                }
+                if (file.size > 2000000) throw new Error('Maks file 2MB'); 
+                // Kita await ini sebentar karena butuh gambarnya untuk PDF
                 pdfAttachmentData = await getBase64(file);
                 paymentStatus = 'Lunas'; 
             } catch (error) {
@@ -1313,36 +1373,35 @@
             }
         }
 
-        // --- 1. SIMPAN DATA KE FIREBASE (BACKGROUND - NO AWAIT) ---
-        // Kita panggil ini agar berjalan di latar belakang
+        // 3. FIREBASE SAVE DI BACKGROUND (FIRE & FORGET)
+        // Kita panggil fungsi ini TANPA 'await' agar PDF langsung jalan
         window.saveAndRecordTransaction(paymentStatus).then(() => {
-            console.log("Data berhasil disimpan di background");
-        }).catch(err => {
-            console.error("Gagal simpan background:", err);
-        });
+            console.log("Database synced in background.");
+        }).catch(err => console.error("Background save warning:", err));
 
-        // --- 2. SIAPKAN PDF TEMPLATE & DOWNLOAD (FOREGROUND) ---
+        // 4. INJECT DATA KE DOM (HTML)
+        // Karena elemen sudah 'rendered' tapi off-screen, injeksi data sangat cepat
         document.getElementById('pdfLogoImg').src = logoBase64 || "";
         document.getElementById('pdfLogoImg').style.display = logoBase64 ? 'block' : 'none';
         document.getElementById('pdfLogoPlaceholder').style.display = logoBase64 ? 'none' : 'block';
         
-        document.getElementById('pdfDocTitle').innerText = currentFormType === 'proforma' ? 'PROFORMA INVOICE' : 'SURAT ORDER';
+        document.getElementById('pdfDocTitle').innerText = currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order';
         
         let docNo = document.getElementById('docNumber').value;
         let infoTableBody = '';
 
         if (currentFormType === 'proforma') {
             infoTableBody = `
-                <tr><td width="80"><strong>No Invoice</strong></td><td>: ${docNo}</td></tr>
-                <tr><td><strong>Tanggal</strong></td><td>: ${document.getElementById('docDate').value}</td></tr>
-                <tr><td><strong>Jatuh Tempo</strong></td><td>: ${document.getElementById('dueDate').value}</td></tr>
-                <tr><td><strong>No PO</strong></td><td>: ${document.getElementById('soReference').value}</td></tr>
+                <tr><td width="100"><strong>No Invoice</strong></td><td width="10">:</td><td>${docNo}</td></tr>
+                <tr><td><strong>Tanggal</strong></td><td>:</td><td>${document.getElementById('docDate').value}</td></tr>
+                <tr><td><strong>Jatuh Tempo</strong></td><td>:</td><td>${document.getElementById('dueDate').value}</td></tr>
+                <tr><td><strong>No PO</strong></td><td>:</td><td>${document.getElementById('soReference').value}</td></tr>
             `;
         } else {
             infoTableBody = `
-                <tr><td width="80"><strong>Tanggal</strong></td><td>: ${document.getElementById('docDate').value}</td></tr>
-                <tr><td><strong>Jatuh Tempo</strong></td><td>: ${document.getElementById('dueDate').value}</td></tr>
-                <tr><td><strong>Referensi</strong></td><td>: ${docNo}</td></tr>
+                <tr><td width="100"><strong>Tanggal</strong></td><td width="10">:</td><td>${document.getElementById('docDate').value}</td></tr>
+                <tr><td><strong>Jatuh Tempo</strong></td><td>:</td><td>${document.getElementById('dueDate').value}</td></tr>
+                <tr><td><strong>No Invoice</strong></td><td>:</td><td>${docNo}</td></tr>
             `;
         }
         document.getElementById('pdfInfoTableBody').innerHTML = infoTableBody;
@@ -1350,40 +1409,61 @@
         document.getElementById('pdfCompany').innerText = company;
         document.getElementById('pdfCustomer').innerText = document.getElementById('customerName').value;
         document.getElementById('pdfAddress').innerText = document.getElementById('address').value;
-        document.getElementById('pdfGrandTotal').innerText = document.getElementById('grandTotal').innerText;
-
-        const pdfBody = document.getElementById('pdfTableBody');
-        pdfBody.innerHTML = '';
         
+        const pdfBody = document.getElementById('pdfTableBody');
+        const fragment = document.createDocumentFragment();
+        
+        let grandTotalVal = 0;
+
         document.querySelectorAll('#transactionBody tr').forEach(row => {
             const sku = row.querySelector('.item-sku').value;
             const desc = row.querySelector('.item-desc').value;
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const qty = row.querySelector('.item-qty').value;
             const priceDisplay = parseFloat(row.querySelector('.item-price').value) || 0;
-            const totalDisplay = row.querySelector('.item-total').value;
+            const totalDisplay = parseFloat(row.querySelector('.item-qty').value * row.querySelector('.item-price').value) || 0;
+            
+            grandTotalVal += totalDisplay;
 
             if(sku) {
-                const newRow = `
-                    <tr>
-                        <td style="border: 1px solid #000; padding: 5px;">${sku}</td>
-                        <td style="border: 1px solid #000; padding: 5px;">${desc}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${qty}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatRp(priceDisplay)}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${totalDisplay}</td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${sku}</td>
+                    <td>${desc}</td>
+                    <td style="text-align: center;">${qty}</td>
+                    <td style="text-align: right;">${formatRp(priceDisplay)}</td>
+                    <td style="text-align: right;">${formatRp(totalDisplay)}</td>
                 `;
-                pdfBody.innerHTML += newRow;
+                fragment.appendChild(tr);
             }
         });
+
+        // Add Total Row inside the table
+        const totalRow = document.createElement('tr');
+        totalRow.innerHTML = `
+            <td colspan="3" style="border: none;"></td>
+            <td style="text-align: right; font-weight: bold; border: 1px solid #000;">Total</td>
+            <td style="text-align: right; font-weight: bold; border: 1px solid #000;">${formatRp(grandTotalVal)}</td>
+        `;
+        fragment.appendChild(totalRow);
+
+        pdfBody.innerHTML = '';
+        pdfBody.appendChild(fragment);
 
         let footerInfo = '';
         if(currentFormType === 'so') {
             footerInfo = `<strong>Remarks:</strong><br>- Retail<br>- Incoterm FOT<br>- Exclude Tax`;
         } else {
-            footerInfo = `<strong>Mohon melakukan transfer pembayaran ke rekening:</strong><br>- No. Rekening : 5885005006<br>- Bank : BNI - Cab. The East Mega Kuningan Jakarta<br>- Atas Nama : KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA`;
+            // FORMAT BARU SESUAI GAMBAR EBCF69
+            footerInfo = `
+                <div style="font-weight: bold; font-style: italic; margin-bottom: 2px;">Mohon melakukan transfer pembayaran ke rekening:</div>
+                <div style="font-style: italic;">- No. Rekening : 5885005006</div>
+                <div style="font-style: italic;">- Bank : BNI - Cab. The East Mega Kuningan Jakarta</div>
+                <div style="font-style: italic;">- Atas Nama : KOPERASI KONSUMEN KARYAWAN MITRA KIARA INDONESIA</div>
+            `;
         }
         document.getElementById('pdfFooterInfo').innerHTML = footerInfo;
 
+        // Handle Lampiran
         const pdfAttachSection = document.getElementById('pdfAttachmentSection');
         const pdfAttachContent = document.getElementById('pdfAttachmentContent');
         if (pdfAttachmentData) {
@@ -1394,35 +1474,35 @@
             pdfAttachContent.innerHTML = '';
         }
 
+        // 5. GENERATE PDF (OPTIMIZED SETTINGS)
         const template = document.getElementById('pdf-template');
-        template.style.display = 'block';
-
-        if(loadingText) loadingText.innerText = "Membuat Halaman PDF...";
+        template.style.display = 'block'; // Show temporarily
         
         try {
             const opt = {
                 margin:       [10, 10, 10, 10], 
-                filename:     `${currentFormType === 'proforma' ? 'Proforma_Inv' : 'Surat_Order'}_${new Date().getTime()}.pdf`,
-                image:        { type: 'jpeg', quality: 0.95 }, 
-                html2canvas:  { scale: 1.5, useCORS: false, logging: false }, 
+                filename:     `${currentFormType === 'proforma' ? 'Proforma' : 'Order'}_${docNo}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 }, // Kualitas 0.75 jauh lebih cepat & file kecil
+                html2canvas:  { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 }, // Scale 1.5 cukup untuk print A4
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
+            // Proses generate
             await html2pdf().set(opt).from(template).save();
             
-            template.style.display = 'none';
+            template.style.display = 'none'; // Hide again
             toggleLoading(false); 
 
+            // Notifikasi Kecil
             const Toast = Swal.mixin({
                 toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
             });
-            Toast.fire({ icon: 'success', title: 'PDF Didownload. Data disimpan di background.' });
+            Toast.fire({ icon: 'success', title: 'Berhasil didownload!' });
 
         } catch (error) {
-            template.style.display = 'none';
             toggleLoading(false);
             console.error(error);
-            Swal.fire('Error', 'Gagal memproses dokumen: ' + error.message, 'error');
+            Swal.fire('Error PDF', 'Gagal generate: ' + error.message, 'error');
         }
     }
 </script>
