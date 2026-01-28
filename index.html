@@ -347,14 +347,14 @@
                                 <label class="form-label">Upload Logo Perusahaan</label>
                                 <div class="input-group">
                                     <input type="file" class="form-control" id="logoUpload" accept="image/*" onchange="previewLogo(this)">
-                                    <button class="btn btn-outline-primary no-print" type="button" onclick="saveLogoDefault()" title="Simpan logo agar tidak perlu upload lagi">
-                                        <i class="bi bi-save"></i> Simpan
+                                    <button class="btn btn-outline-primary no-print" type="button" onclick="window.saveLogoDB()" title="Simpan logo ke Database (Permanen)">
+                                        <i class="bi bi-cloud-upload"></i> Simpan Permanen
                                     </button>
-                                    <button class="btn btn-outline-danger no-print" type="button" onclick="clearLogoDefault()" title="Hapus logo default">
+                                    <button class="btn btn-outline-danger no-print" type="button" onclick="window.deleteLogoDB()" title="Hapus logo dari Database">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
-                                <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Klik "Simpan" agar logo otomatis muncul di transaksi berikutnya.</div>
+                                <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Klik "Simpan Permanen" agar logo tersimpan di server dan bisa dibuka di semua perangkat.</div>
                             </div>
                             <div class="col-md-4 text-center mt-3 mt-md-0">
                                 <div id="logoPreviewBox" style="border: 2px dashed #ccc; border-radius: 8px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
@@ -491,10 +491,11 @@
                                     <th class="table-info">Total Customer</th>
                                     <th class="table-secondary">PPN 11%</th>
                                     <th class="table-success">Margin</th>
+                                    <th class="table-danger">Aksi</th> <!-- Tambah kolom Aksi -->
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody">
-                                <tr><td colspan="9" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
+                                <tr><td colspan="10" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
                             </tbody>
                             <tfoot id="reportTableFoot"></tfoot>
                         </table>
@@ -654,6 +655,7 @@
     const productCol = collection(db, 'products');
     const transactionCol = collection(db, 'transactions'); // New Collection for Reports
     const countersPath = 'counters'; 
+    const settingsDocRef = doc(db, 'settings', 'company_profile'); // Dokumen pengaturan global
 
     window.localProducts = [];
     window.currentCounters = { doc: 1, ref: 1 }; // Cache counter sementara
@@ -670,6 +672,7 @@
             if (user) {
                 setupRealtimeListener();
                 setupReportListener(); // Listen to reports
+                setupSettingsListener(); // Listen to Logo changes
                 fetchAllAutoNumbers();
             }
         });
@@ -697,6 +700,78 @@
         });
     }
 
+    // --- FITUR LOGO CLOUD ---
+    // 1. Simpan Logo ke Database
+    window.saveLogoDB = async () => {
+        if (!window.logoBase64) {
+            Swal.fire('Info', 'Pilih file logo terlebih dahulu.', 'warning');
+            return;
+        }
+        
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.style.display = 'flex';
+        loadingOverlay.querySelector('span').innerText = 'Menyimpan Logo ke Database...';
+
+        try {
+            // Simpan base64 ke dokumen 'settings/company_profile'
+            // Gunakan {merge: true} agar field lain tidak terhapus jika ada
+            await setDoc(settingsDocRef, { logo: window.logoBase64 }, { merge: true });
+            Swal.fire('Berhasil', 'Logo tersimpan permanen di database.', 'success');
+        } catch (e) {
+            console.error("Gagal simpan logo:", e);
+            Swal.fire('Error', 'Gagal menyimpan logo: ' + e.message, 'error');
+        } finally {
+            loadingOverlay.style.display = 'none';
+            loadingOverlay.querySelector('span').innerText = 'Memproses...';
+        }
+    }
+
+    // 2. Hapus Logo dari Database
+    window.deleteLogoDB = async () => {
+        const result = await Swal.fire({
+            title: 'Hapus Logo Permanen?',
+            text: "Logo akan hilang untuk semua user!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await updateDoc(settingsDocRef, { logo: "" });
+                window.logoBase64 = "";
+                document.getElementById('logoPreviewBox').innerHTML = '<span class="text-muted small">Preview Logo</span>';
+                document.getElementById('logoPreviewBox').style.border = "2px dashed #ccc";
+                Swal.fire('Terhapus', 'Logo telah dihapus dari database.', 'success');
+            } catch (e) {
+                // Jika dokumen belum ada, updateDoc akan error, jadi kita ignore atau handle
+                console.error(e);
+                Swal.fire('Info', 'Logo sudah kosong atau belum pernah diset.', 'info');
+            }
+        }
+    }
+
+    // 3. Listener Realtime untuk Logo (Otomatis update jika diubah di tempat lain)
+    function setupSettingsListener() {
+        onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.logo) {
+                    window.logoBase64 = data.logo;
+                    // Update UI Preview
+                    const previewBox = document.getElementById('logoPreviewBox');
+                    previewBox.innerHTML = `<img src="${window.logoBase64}" style="max-height: 100%; max-width: 100%;">`;
+                    previewBox.style.border = "none";
+                } else {
+                    window.logoBase64 = "";
+                    document.getElementById('logoPreviewBox').innerHTML = '<span class="text-muted small">Preview Logo</span>';
+                    document.getElementById('logoPreviewBox').style.border = "2px dashed #ccc";
+                }
+            }
+        });
+    }
+
     // --- REPORT LISTENER ---
     function setupReportListener() {
         // Query sederhana tanpa orderBy untuk menghindari kebutuhan index di awal
@@ -712,7 +787,7 @@
 
             // Client-side sorting (descending date)
             const docs = [];
-            snapshot.forEach(doc => docs.push(doc.data()));
+            snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
             docs.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             // Variabel untuk Grand Total
@@ -746,10 +821,15 @@
                         <td class="fw-bold">${data.noSO || '-'}</td>
                         <td>${data.customer}</td>
                         <td>${statusBadge}</td>
-                        <td class="text-end text-primary">${formatRp(tMKI)}</td>
-                        <td class="text-end text-info">${formatRp(tCust)}</td>
-                        <td class="text-end text-secondary">${formatRp(tPPN)}</td>
-                        <td class="text-end text-success fw-bold">${formatRp(tMargin)}</td>
+                        <td class="text-end text-primary">${window.formatRp(tMKI)}</td>
+                        <td class="text-end text-info">${window.formatRp(tCust)}</td>
+                        <td class="text-end text-secondary">${window.formatRp(tPPN)}</td>
+                        <td class="text-end text-success fw-bold">${window.formatRp(tMargin)}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger" onclick="window.deleteReport('${data.id}')" title="Hapus Laporan">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
                 tableBody.innerHTML += row;
@@ -760,10 +840,11 @@
                 tableFoot.innerHTML = `
                     <tr class="table-secondary fw-bold" style="border-top: 2px solid #aaa;">
                         <td colspan="5" class="text-center">GRAND TOTAL</td>
-                        <td class="text-end text-primary">${formatRp(sumMKI)}</td>
-                        <td class="text-end text-info">${formatRp(sumCust)}</td>
-                        <td class="text-end text-secondary">${formatRp(sumPPN)}</td>
-                        <td class="text-end text-success">${formatRp(sumMargin)}</td>
+                        <td class="text-end text-primary">${window.formatRp(sumMKI)}</td>
+                        <td class="text-end text-info">${window.formatRp(sumCust)}</td>
+                        <td class="text-end text-secondary">${window.formatRp(sumPPN)}</td>
+                        <td class="text-end text-success">${window.formatRp(sumMargin)}</td>
+                        <td></td>
                     </tr>
                 `;
             }
@@ -776,6 +857,48 @@
     window.loadReports = function() {
         console.log("Refreshing reports...");
     };
+
+    window.deleteReport = async (id) => {
+        const { value: password } = await Swal.fire({
+            title: 'Hapus Laporan?',
+            text: "Masukkan password admin untuk menghapus:",
+            input: 'password',
+            inputPlaceholder: 'Password Admin',
+            showCancelButton: true,
+            confirmButtonText: 'Hapus',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#d33',
+        });
+
+        if (password) {
+            if (password === 'admin123') {
+                const result = await Swal.fire({
+                    title: 'Yakin hapus permanen?',
+                    text: "Data tidak bisa dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, Hapus!'
+                });
+
+                if(result.isConfirmed) {
+                    const loadingOverlay = document.getElementById('loadingOverlay');
+                    loadingOverlay.style.display = 'flex';
+                    try {
+                        await deleteDoc(doc(db, 'transactions', id));
+                        Swal.fire('Terhapus', 'Laporan berhasil dihapus.', 'success');
+                    } catch (e) {
+                        Swal.fire('Error', 'Gagal menghapus: ' + e.message, 'error');
+                    } finally {
+                        loadingOverlay.style.display = 'none';
+                    }
+                }
+            } else {
+                Swal.fire('Akses Ditolak', 'Password salah!', 'error');
+            }
+        }
+    }
 
     function setupRealtimeListener() {
         onSnapshot(productCol, (snapshot) => {
@@ -802,8 +925,8 @@
                 tr.innerHTML = `
                     <td class="fw-medium">${data.sku}</td>
                     <td>${data.description}</td>
-                    <td class="text-end font-monospace text-primary">${formatRp(pMKI)}</td>
-                    <td class="text-end font-monospace text-info">${formatRp(pCust)}</td>
+                    <td class="text-end font-monospace text-primary">${window.formatRp(pMKI)}</td>
+                    <td class="text-end font-monospace text-info">${window.formatRp(pCust)}</td>
                     <td class="text-center">
                         <button class="btn btn-primary btn-action btn-edit" 
                             data-id="${id}" 
@@ -913,7 +1036,7 @@
         // Masukkan ke input field sesuai Mode Tab yang aktif
         // Perhatikan ID input: 'docNumber' (Utama) dan 'soReference' (Ref)
         
-        if (currentFormType === 'proforma') {
+        if (window.currentFormType === 'proforma') {
             // Jika Proforma: Utama = PRO, Ref = SO
             document.getElementById('docNumber').value = fmtPRO;
             document.getElementById('soReference').value = fmtSO;
@@ -921,6 +1044,41 @@
             // Jika SO: Utama = SO
             document.getElementById('docNumber').value = fmtSO;
         }
+    }
+
+    // HELPER: Convert File to Base64 (Untuk Upload) & Resize (Untuk Performa)
+    const getBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Resize Logic: Max width 800px untuk performa PDF
+                    const MAX_WIDTH = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Kompresi JPEG 0.7
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = error => reject(error);
+        });
     }
 
     // Fungsi Simpan Data ke Firestore (Tanpa Gambar)
@@ -950,7 +1108,7 @@
         let noInvoice = '-';
         let noSO = '-';
 
-        if(currentFormType === 'proforma') {
+        if(window.currentFormType === 'proforma') {
             noInvoice = docNumber;
             noSO = soRef;
         } else {
@@ -962,7 +1120,7 @@
         // Simpan data teks ke Firestore (gambar dihapus dari sini)
         const transData = {
             date: document.getElementById('docDate').value,
-            type: currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order',
+            type: window.currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order',
             noInvoice: noInvoice,
             noSO: noSO,
             customer: customer,
@@ -978,7 +1136,7 @@
         await addDoc(transactionCol, transData);
 
         // Update Counter yang terpakai
-        if (currentFormType === 'proforma') {
+        if (window.currentFormType === 'proforma') {
              // Update counter PRO
              const proId = `counter_pro_gen_${year}_${month}`;
              await setDoc(doc(db, countersPath, proId), { 
@@ -1017,7 +1175,10 @@
             return;
         }
 
-        toggleLoading(true);
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.style.display = 'flex';
+        loadingOverlay.querySelector('span').innerText = 'Menyimpan Data...';
+
         try {
             const dataToSave = { sku, description, priceMKI, priceCustomer };
             
@@ -1037,7 +1198,8 @@
             console.error(error);
             Swal.fire('Error', 'Gagal menyimpan: ' + error.code, 'error');
         } finally {
-            toggleLoading(false);
+            loadingOverlay.style.display = 'none';
+            loadingOverlay.querySelector('span').innerText = 'Memproses...';
         }
     };
 
@@ -1052,7 +1214,8 @@
         });
 
         if (result.isConfirmed) {
-            toggleLoading(true);
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
             try {
                 const docRef = doc(db, 'products', id);
                 await deleteDoc(docRef);
@@ -1060,7 +1223,7 @@
             } catch (error) {
                 Swal.fire('Error', error.message, 'error');
             } finally {
-                toggleLoading(false);
+                loadingOverlay.style.display = 'none';
             }
         }
     };
@@ -1074,8 +1237,8 @@
     // LOGIC: UI & FORM INTERACTION (Standard JS)
     // ==========================================
 
-    let currentFormType = 'proforma'; 
-    let logoBase64 = "";
+    window.currentFormType = 'proforma'; 
+    window.logoBase64 = "";
 
     // HELPER: Convert File to Base64 (Moved to global scope)
     const getBase64 = (file) => {
@@ -1116,7 +1279,7 @@
         document.getElementById('docDate').valueAsDate = new Date();
         document.getElementById('dueDate').valueAsDate = new Date(new Date().setDate(new Date().getDate() + 14));
         addRow(); 
-        loadLogoDefault();
+        // loadLogoDefault(); // REMOVED: Now handled by Firebase listener
         
         if(sessionStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('masterLoginPanel').style.display = 'none';
@@ -1148,40 +1311,11 @@
     }
     // -------------------------
 
-    // --- FITUR LOGO STORAGE ---
-    function saveLogoDefault() {
-        if (logoBase64) {
-            localStorage.setItem('savedLogo', logoBase64);
-            Swal.fire('Tersimpan', 'Logo berhasil disimpan di browser.', 'success');
-        } else {
-            Swal.fire('Info', 'Pilih file logo terlebih dahulu.', 'warning');
-        }
-    }
-
-    function clearLogoDefault() {
-        localStorage.removeItem('savedLogo');
-        logoBase64 = "";
-        document.getElementById('logoPreviewBox').innerHTML = '<span class="text-muted small">Preview Logo</span>';
-        document.getElementById('logoPreviewBox').style.border = "2px dashed #ccc";
-        document.getElementById('logoUpload').value = "";
-        Swal.fire('Terhapus', 'Logo default telah dihapus.', 'success');
-    }
-
-    function loadLogoDefault() {
-        const saved = localStorage.getItem('savedLogo');
-        if (saved) {
-            logoBase64 = saved;
-            document.getElementById('logoPreviewBox').innerHTML = `<img src="${logoBase64}" style="max-height: 100%; max-width: 100%;">`;
-            document.getElementById('logoPreviewBox').style.border = "none";
-        }
-    }
-    // -------------------------
-
     async function previewLogo(input) {
         if (input.files && input.files[0]) {
             try {
-                logoBase64 = await getBase64(input.files[0]); 
-                document.getElementById('logoPreviewBox').innerHTML = `<img src="${logoBase64}" style="max-height: 100%; max-width: 100%;">`;
+                window.logoBase64 = await getBase64(input.files[0]); 
+                document.getElementById('logoPreviewBox').innerHTML = `<img src="${window.logoBase64}" style="max-height: 100%; max-width: 100%;">`;
                 document.getElementById('logoPreviewBox').style.border = "none";
             } catch (e) {
                 console.error("Gagal memproses logo", e);
@@ -1190,7 +1324,7 @@
     }
 
     function setFormType(type) {
-        currentFormType = type;
+        window.currentFormType = type;
         const titleEl = document.getElementById('formTitle');
         const refLbl = document.getElementById('lblRefNumber');
         const badge = document.getElementById('priceInfoBadge');
@@ -1238,10 +1372,16 @@
     }
 
     function toggleLoading(show) {
-        document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        const overlay = document.getElementById('loadingOverlay');
+        if(show) {
+            overlay.style.display = 'flex';
+            overlay.querySelector('span').innerText = 'Memproses...';
+        } else {
+            overlay.style.display = 'none';
+        }
     }
 
-    function formatRp(n) {
+    window.formatRp = function(n) {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
     }
 
@@ -1305,7 +1445,7 @@
         const priceCust = parseFloat(option.getAttribute('data-price-cust')) || 0;
         
         let finalPrice = 0;
-        if(currentFormType === 'so') {
+        if(window.currentFormType === 'so') {
             finalPrice = priceMKI; 
         } else {
             finalPrice = priceCust; 
@@ -1319,7 +1459,7 @@
         const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const total = qty * price;
-        row.querySelector('.item-total').value = formatRp(total);
+        row.querySelector('.item-total').value = window.formatRp(total);
         calcGrandTotal();
     }
 
@@ -1338,7 +1478,7 @@
             const price = parseFloat(row.querySelector('.item-price').value) || 0;
             grand += (qty * price);
         });
-        document.getElementById('grandTotal').innerText = formatRp(grand);
+        document.getElementById('grandTotal').innerText = window.formatRp(grand);
     }
 
     // Fungsi Utama: Generate PDF DULUAN, Simpan DB di Background
@@ -1359,7 +1499,7 @@
         let pdfAttachmentData = null;
         let paymentStatus = 'Tunggu Bayar'; 
 
-        if (currentFormType === 'so' && fileInput.files.length > 0) {
+        if (window.currentFormType === 'so' && fileInput.files.length > 0) {
             try {
                 const file = fileInput.files[0];
                 if (file.size > 2000000) throw new Error('Maks file 2MB'); 
@@ -1381,16 +1521,16 @@
 
         // 4. INJECT DATA KE DOM (HTML)
         // Karena elemen sudah 'rendered' tapi off-screen, injeksi data sangat cepat
-        document.getElementById('pdfLogoImg').src = logoBase64 || "";
-        document.getElementById('pdfLogoImg').style.display = logoBase64 ? 'block' : 'none';
-        document.getElementById('pdfLogoPlaceholder').style.display = logoBase64 ? 'none' : 'block';
+        document.getElementById('pdfLogoImg').src = window.logoBase64 || "";
+        document.getElementById('pdfLogoImg').style.display = window.logoBase64 ? 'block' : 'none';
+        document.getElementById('pdfLogoPlaceholder').style.display = window.logoBase64 ? 'none' : 'block';
         
-        document.getElementById('pdfDocTitle').innerText = currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order';
+        document.getElementById('pdfDocTitle').innerText = window.currentFormType === 'proforma' ? 'Proforma Invoice' : 'Surat Order';
         
         let docNo = document.getElementById('docNumber').value;
         let infoTableBody = '';
 
-        if (currentFormType === 'proforma') {
+        if (window.currentFormType === 'proforma') {
             infoTableBody = `
                 <tr><td width="100"><strong>No Invoice</strong></td><td width="10">:</td><td>${docNo}</td></tr>
                 <tr><td><strong>Tanggal</strong></td><td>:</td><td>${document.getElementById('docDate').value}</td></tr>
@@ -1430,8 +1570,8 @@
                     <td>${sku}</td>
                     <td>${desc}</td>
                     <td style="text-align: center;">${qty}</td>
-                    <td style="text-align: right;">${formatRp(priceDisplay)}</td>
-                    <td style="text-align: right;">${formatRp(totalDisplay)}</td>
+                    <td style="text-align: right;">${window.formatRp(priceDisplay)}</td>
+                    <td style="text-align: right;">${window.formatRp(totalDisplay)}</td>
                 `;
                 fragment.appendChild(tr);
             }
@@ -1442,7 +1582,7 @@
         totalRow.innerHTML = `
             <td colspan="3" style="border: none;"></td>
             <td style="text-align: right; font-weight: bold; border: 1px solid #000;">Total</td>
-            <td style="text-align: right; font-weight: bold; border: 1px solid #000;">${formatRp(grandTotalVal)}</td>
+            <td style="text-align: right; font-weight: bold; border: 1px solid #000;">${window.formatRp(grandTotalVal)}</td>
         `;
         fragment.appendChild(totalRow);
 
@@ -1450,7 +1590,7 @@
         pdfBody.appendChild(fragment);
 
         let footerInfo = '';
-        if(currentFormType === 'so') {
+        if(window.currentFormType === 'so') {
             footerInfo = `<strong>Remarks:</strong><br>- Retail<br>- Incoterm FOT<br>- Exclude Tax`;
         } else {
             // FORMAT BARU SESUAI GAMBAR EBCF69
@@ -1481,7 +1621,7 @@
         try {
             const opt = {
                 margin:       [10, 10, 10, 10], 
-                filename:     `${currentFormType === 'proforma' ? 'Proforma' : 'Order'}_${docNo}.pdf`,
+                filename:     `${window.currentFormType === 'proforma' ? 'Proforma' : 'Order'}_${docNo}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 }, // Kualitas 0.75 jauh lebih cepat & file kecil
                 html2canvas:  { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 }, // Scale 1.5 cukup untuk print A4
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
