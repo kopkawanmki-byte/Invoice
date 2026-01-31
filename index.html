@@ -259,10 +259,17 @@
                         <label class="form-label">Username</label>
                         <input type="text" class="form-control" id="inputUser" placeholder="Masukkan username">
                     </div>
+                    <!-- UPDATE: PASSWORD FIELD WITH EYE ICON -->
                     <div class="mb-4 text-start">
                         <label class="form-label">Password</label>
-                        <input type="password" class="form-control" id="inputPass" placeholder="Masukkan password">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="inputPass" placeholder="Masukkan password">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()" tabindex="-1">
+                                <i class="bi bi-eye-slash" id="togglePassIcon"></i>
+                            </button>
+                        </div>
                     </div>
+                    <!-- END UPDATE -->
                     <button class="btn btn-main" onclick="checkAdminLogin()">
                         <i class="bi bi-box-arrow-in-right me-2"></i> Masuk
                     </button>
@@ -893,7 +900,7 @@
         });
 
         if (password) {
-            if (password === 'kawan123') {
+            if (password === 'admin123') {
                 const result = await Swal.fire({
                     title: 'Yakin hapus permanen?',
                     text: "Data tidak bisa dikembalikan!",
@@ -1317,7 +1324,7 @@
         const u = document.getElementById('inputUser').value;
         const p = document.getElementById('inputPass').value;
         
-        if (u === 'admin' && p === 'kawan123') {
+        if (u === 'admin' && p === 'admin123') {
             // Hide Login Panel, Show Main App
             document.getElementById('globalLoginPanel').style.display = 'none';
             document.getElementById('mainAppContent').style.display = 'block';
@@ -1338,6 +1345,22 @@
         
         document.getElementById('inputUser').value = '';
         document.getElementById('inputPass').value = '';
+    }
+    
+    // --- FITUR BARU: SHOW/HIDE PASSWORD ---
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('inputPass');
+        const icon = document.getElementById('togglePassIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
     }
     // -------------------------
 
