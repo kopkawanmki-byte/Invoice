@@ -170,6 +170,14 @@
             display: none; justify-content: center; align-items: center; flex-direction: column;
         }
 
+        /* LOGIN SCREEN STYLE */
+        #globalLoginPanel {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* ============================ */
         /* PDF TEMPLATE STYLE (FIXED)   */
         /* ============================ */
@@ -234,70 +242,85 @@
 </head>
 <body>
 
-<!-- Navbar & Tabs -->
-<div class="navbar-custom sticky-top">
+<!-- ============================================= -->
+<!-- GLOBAL LOGIN PANEL (VISIBLE BY DEFAULT)       -->
+<!-- ============================================= -->
+<div id="globalLoginPanel">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold m-0" style="color: var(--accent);"><i class="bi bi-layers-half"></i> App Invoice & Order</h4>
-            <span class="badge bg-light text-dark border">Firebase Connected <i class="bi bi-circle-fill text-success ms-1" style="font-size: 8px;"></i></span>
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="card-pro text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="mb-2 fw-bold">Login Sistem</h4>
+                    <p class="text-muted small mb-4">Silakan masuk untuk mengakses menu</p>
+                    <div class="mb-3 text-start">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="inputUser" placeholder="Masukkan username">
+                    </div>
+                    <div class="mb-4 text-start">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="inputPass" placeholder="Masukkan password">
+                    </div>
+                    <button class="btn btn-main" onclick="checkAdminLogin()">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Masuk
+                    </button>
+                </div>
+                <div class="text-center text-muted small mt-3">
+                    Aplikasi Invoice & Order System V2.0
+                </div>
+            </div>
         </div>
-        <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="master-tab" data-bs-toggle="tab" data-bs-target="#master-pane" type="button" role="tab"><i class="bi bi-database me-2"></i>Master Data</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="proforma-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('proforma')"><i class="bi bi-receipt me-2"></i>Proforma Invoice</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="so-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('so')"><i class="bi bi-box-seam me-2"></i>Surat Order</button>
-            </li>
-            <!-- NEW TAB: LAPORAN -->
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="report-tab" data-bs-toggle="tab" data-bs-target="#report-pane" type="button" role="tab"><i class="bi bi-journal-text me-2"></i>Laporan</button>
-            </li>
-        </ul>
     </div>
 </div>
 
-<div class="container" style="max-width: 900px;">
-    
-    <div class="tab-content" id="myTabContent">
-        
-        <!-- ============================================= -->
-        <!-- TAB 1: MASTER DATA MANAGEMENT (WITH LOGIN)    -->
-        <!-- ============================================= -->
-        <div class="tab-pane fade show active" id="master-pane" role="tabpanel">
-            
-            <!-- PANEL LOGIN ADMIN -->
-            <div id="masterLoginPanel" class="row justify-content-center py-5">
-                <div class="col-md-5">
-                    <div class="card-pro text-center p-4">
-                        <div class="mb-3">
-                            <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
-                        </div>
-                        <h4 class="mb-4 fw-bold">Login Admin</h4>
-                        <div class="mb-3 text-start">
-                            <label class="form-label">Username</label>
-                            <input type="text" class="form-control" id="inputUser" placeholder="Masukkan username">
-                        </div>
-                        <div class="mb-4 text-start">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" id="inputPass" placeholder="Masukkan password">
-                        </div>
-                        <button class="btn btn-main" onclick="checkAdminLogin()">
-                            <i class="bi bi-box-arrow-in-right me-2"></i> Masuk
-                        </button>
-                    </div>
-                </div>
-            </div>
+<!-- ============================================= -->
+<!-- MAIN APPLICATION CONTENT (HIDDEN BY DEFAULT)  -->
+<!-- ============================================= -->
+<div id="mainAppContent" style="display: none;">
 
-            <!-- CONTENT MASTER DATA (HIDDEN BY DEFAULT) -->
-            <div id="masterDataContent" style="display: none;">
+    <!-- Navbar & Tabs -->
+    <div class="navbar-custom sticky-top">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <h4 class="fw-bold m-0" style="color: var(--accent);"><i class="bi bi-layers-half"></i> App Invoice & Order</h4>
+                    <span class="badge bg-light text-dark border">Firebase Connected <i class="bi bi-circle-fill text-success ms-1" style="font-size: 8px;"></i></span>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="logoutAdmin()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+            <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="master-tab" data-bs-toggle="tab" data-bs-target="#master-pane" type="button" role="tab"><i class="bi bi-database me-2"></i>Master Data</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="proforma-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('proforma')"><i class="bi bi-receipt me-2"></i>Proforma Invoice</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="so-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab" onclick="setFormType('so')"><i class="bi bi-box-seam me-2"></i>Surat Order</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="report-tab" data-bs-toggle="tab" data-bs-target="#report-pane" type="button" role="tab"><i class="bi bi-journal-text me-2"></i>Laporan</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 900px;">
+        
+        <div class="tab-content" id="myTabContent">
+            
+            <!-- ============================================= -->
+            <!-- TAB 1: MASTER DATA MANAGEMENT                 -->
+            <!-- ============================================= -->
+            <div class="tab-pane fade show active" id="master-pane" role="tabpanel">
                 <div class="card-pro">
                     <div class="card-header-pro">
                         <span><i class="bi bi-list-check me-2"></i> Daftar Produk (SKU)</span>
                         <div>
-                            <button class="btn btn-sm btn-outline-danger me-2" onclick="logoutAdmin()"><i class="bi bi-box-arrow-left"></i> Logout</button>
                             <button class="btn btn-sm btn-primary" onclick="openMasterModal()"><i class="bi bi-plus-lg"></i> Tambah Baru</button>
                         </div>
                     </div>
@@ -322,190 +345,189 @@
                 </div>
             </div>
 
-        </div>
-
-        <!-- ============================================= -->
-        <!-- TAB 2 & 3: FORM GENERATOR (SHARED)            -->
-        <!-- ============================================= -->
-        <div class="tab-pane fade" id="form-pane" role="tabpanel">
-            <div class="mb-4 text-center">
-                <h2 class="fw-bold text-dark mb-1" id="formTitle">Form Dokumen</h2>
-                <p class="text-muted small">Lengkapi data di bawah untuk generate PDF</p>
-                <div class="alert alert-info py-1 px-2 d-inline-block small mb-0 mt-2" id="priceInfoBadge">
-                    <i class="bi bi-info-circle"></i> Menggunakan Harga Customer (Proforma)
-                </div>
-            </div>
-
-            <!-- Area Input Form (Tidak dicetak langsung) -->
-            <div id="formInputArea">
-                <!-- Header Dokumen (Logo & Info) -->
-                <div class="card-pro">
-                    <div class="card-header-pro"><i class="bi bi-building me-2"></i> Header Dokumen</div>
-                    <div class="card-body-pro">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <label class="form-label">Upload Logo Perusahaan</label>
-                                <div class="input-group">
-                                    <input type="file" class="form-control" id="logoUpload" accept="image/*" onchange="previewLogo(this)">
-                                    <button class="btn btn-outline-primary no-print" type="button" onclick="window.saveLogoDB()" title="Simpan logo ke Database (Permanen)">
-                                        <i class="bi bi-cloud-upload"></i> Simpan Permanen
-                                    </button>
-                                    <button class="btn btn-outline-danger no-print" type="button" onclick="window.deleteLogoDB()" title="Hapus logo dari Database">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                                <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Klik "Simpan Permanen" agar logo tersimpan di server dan bisa dibuka di semua perangkat.</div>
-                            </div>
-                            <div class="col-md-4 text-center mt-3 mt-md-0">
-                                <div id="logoPreviewBox" style="border: 2px dashed #ccc; border-radius: 8px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                    <span class="text-muted small">Preview Logo</span>
-                                </div>
-                            </div>
-                        </div>
+            <!-- ============================================= -->
+            <!-- TAB 2 & 3: FORM GENERATOR (SHARED)            -->
+            <!-- ============================================= -->
+            <div class="tab-pane fade" id="form-pane" role="tabpanel">
+                <div class="mb-4 text-center">
+                    <h2 class="fw-bold text-dark mb-1" id="formTitle">Form Dokumen</h2>
+                    <p class="text-muted small">Lengkapi data di bawah untuk generate PDF</p>
+                    <div class="alert alert-info py-1 px-2 d-inline-block small mb-0 mt-2" id="priceInfoBadge">
+                        <i class="bi bi-info-circle"></i> Menggunakan Harga Customer (Proforma)
                     </div>
                 </div>
 
-                <div class="card-pro">
-                    <div class="card-header-pro"><i class="bi bi-person-lines-fill me-2"></i> Informasi Pelanggan</div>
-                    <div class="card-body-pro">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Nama Perusahaan (Proyek)</label>
-                                <input type="text" class="form-control" id="companyName">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Nama Customer / Attn</label>
-                                <input type="text" class="form-control" id="customerName">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Alamat Lengkap</label>
-                                <textarea class="form-control" id="address" rows="2"></textarea>
-                            </div>
-                            
-                            <!-- AUTO NUMBER SECTION -->
-                            <div class="col-md-6">
-                                <label class="form-label d-flex justify-content-between">
-                                    <span id="lblRefNumber">Nomor Dokumen</span>
-                                    <a href="#" class="text-decoration-none no-print" onclick="refreshAutoNumber('doc')" style="font-size: 0.8em;">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh No
-                                    </a>
-                                </label>
-                                <input type="text" class="form-control fw-bold text-primary" id="docNumber" placeholder="Loading...">
-                            </div>
-                            
-                            <!-- UPDATE: Menambahkan ID divSoRef agar bisa di-hide saat mode SO -->
-                            <div class="col-md-6" id="divSoRef">
-                                <label class="form-label d-flex justify-content-between">
-                                    <span>Nomor Referensi SO / PO</span>
-                                    <a href="#" class="text-decoration-none no-print" onclick="refreshAutoNumber('ref')" style="font-size: 0.8em;">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh No
-                                    </a>
-                                </label>
-                                <input type="text" class="form-control fw-bold text-success" id="soReference" placeholder="Loading...">
-                            </div>
-                            <!-- END AUTO NUMBER -->
-
-                            <!-- FITUR BARU: UPLOAD BUKTI TRANSFER (KHUSUS SO) -->
-                            <div class="col-12 mt-3" id="divProofUpload" style="display: none;">
-                                <div class="p-3 border rounded bg-light border-primary">
-                                    <label class="form-label fw-bold text-primary"><i class="bi bi-upload me-1"></i> Bukti Transfer / Lampiran (Khusus SO)</label>
-                                    <input type="file" class="form-control" id="proofUpload" accept="image/*">
-                                    <div class="form-text text-muted small">
-                                        <i class="bi bi-info-circle-fill text-warning"></i> Upload lampiran akan mengubah status laporan menjadi <b>LUNAS</b>. Lampiran akan dimasukkan ke halaman kedua PDF.
+                <!-- Area Input Form (Tidak dicetak langsung) -->
+                <div id="formInputArea">
+                    <!-- Header Dokumen (Logo & Info) -->
+                    <div class="card-pro">
+                        <div class="card-header-pro"><i class="bi bi-building me-2"></i> Header Dokumen</div>
+                        <div class="card-body-pro">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <label class="form-label">Upload Logo Perusahaan</label>
+                                    <div class="input-group">
+                                        <input type="file" class="form-control" id="logoUpload" accept="image/*" onchange="previewLogo(this)">
+                                        <button class="btn btn-outline-primary no-print" type="button" onclick="window.saveLogoDB()" title="Simpan logo ke Database (Permanen)">
+                                            <i class="bi bi-cloud-upload"></i> Simpan Permanen
+                                        </button>
+                                        <button class="btn btn-outline-danger no-print" type="button" onclick="window.deleteLogoDB()" title="Hapus logo dari Database">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Klik "Simpan Permanen" agar logo tersimpan di server dan bisa dibuka di semua perangkat.</div>
+                                </div>
+                                <div class="col-md-4 text-center mt-3 mt-md-0">
+                                    <div id="logoPreviewBox" style="border: 2px dashed #ccc; border-radius: 8px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                        <span class="text-muted small">Preview Logo</span>
                                     </div>
                                 </div>
                             </div>
-                            <!-- END UPLOAD BUKTI -->
+                        </div>
+                    </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Tanggal</label>
-                                <input type="date" class="form-control" id="docDate" onchange="onDateChanged()">
+                    <div class="card-pro">
+                        <div class="card-header-pro"><i class="bi bi-person-lines-fill me-2"></i> Informasi Pelanggan</div>
+                        <div class="card-body-pro">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nama Perusahaan (Proyek)</label>
+                                    <input type="text" class="form-control" id="companyName">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nama Customer / Attn</label>
+                                    <input type="text" class="form-control" id="customerName">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Alamat Lengkap</label>
+                                    <textarea class="form-control" id="address" rows="2"></textarea>
+                                </div>
+                                
+                                <!-- AUTO NUMBER SECTION -->
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex justify-content-between">
+                                        <span id="lblRefNumber">Nomor Dokumen</span>
+                                        <a href="#" class="text-decoration-none no-print" onclick="refreshAutoNumber('doc')" style="font-size: 0.8em;">
+                                            <i class="bi bi-arrow-clockwise"></i> Refresh No
+                                        </a>
+                                    </label>
+                                    <input type="text" class="form-control fw-bold text-primary" id="docNumber" placeholder="Loading...">
+                                </div>
+                                
+                                <!-- UPDATE: Menambahkan ID divSoRef agar bisa di-hide saat mode SO -->
+                                <div class="col-md-6" id="divSoRef">
+                                    <label class="form-label d-flex justify-content-between">
+                                        <span>Nomor Referensi SO / PO</span>
+                                        <a href="#" class="text-decoration-none no-print" onclick="refreshAutoNumber('ref')" style="font-size: 0.8em;">
+                                            <i class="bi bi-arrow-clockwise"></i> Refresh No
+                                        </a>
+                                    </label>
+                                    <input type="text" class="form-control fw-bold text-success" id="soReference" placeholder="Loading...">
+                                </div>
+                                <!-- END AUTO NUMBER -->
+
+                                <!-- FITUR BARU: UPLOAD BUKTI TRANSFER (KHUSUS SO) -->
+                                <div class="col-12 mt-3" id="divProofUpload" style="display: none;">
+                                    <div class="p-3 border rounded bg-light border-primary">
+                                        <label class="form-label fw-bold text-primary"><i class="bi bi-upload me-1"></i> Bukti Transfer / Lampiran (Khusus SO)</label>
+                                        <input type="file" class="form-control" id="proofUpload" accept="image/*">
+                                        <div class="form-text text-muted small">
+                                            <i class="bi bi-info-circle-fill text-warning"></i> Upload lampiran akan mengubah status laporan menjadi <b>LUNAS</b>. Lampiran akan dimasukkan ke halaman kedua PDF.
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- END UPLOAD BUKTI -->
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Tanggal</label>
+                                    <input type="date" class="form-control" id="docDate" onchange="onDateChanged()">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Jatuh Tempo</label>
+                                    <input type="date" class="form-control" id="dueDate">
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Jatuh Tempo</label>
-                                <input type="date" class="form-control" id="dueDate">
+                        </div>
+                    </div>
+
+                    <div class="card-pro">
+                        <div class="card-header-pro">
+                            <span><i class="bi bi-cart me-2"></i> Rincian Barang</span>
+                            <button type="button" class="btn btn-sm btn-primary no-print" onclick="addRow()">
+                                <i class="bi bi-plus-circle"></i> Tambah
+                            </button>
+                        </div>
+                        <div class="card-body-pro">
+                            <div class="table-responsive">
+                                <table class="table-pro">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 20%;">SKU</th>
+                                            <th style="width: 30%;">Deskripsi</th>
+                                            <th style="width: 10%;">Qty</th>
+                                            <th style="width: 20%;">Harga (@)</th>
+                                            <th style="width: 20%;">Total</th>
+                                            <th style="width: 30px;" class="no-print"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-end align-items-center mt-3 pt-3 border-top">
+                                <div class="text-muted me-3 fw-medium">Grand Total:</div>
+                                <div id="grandTotal" class="fw-bold fs-4 text-primary">Rp 0</div>
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <div class="mb-5">
+                    <button type="button" class="btn btn-main" onclick="generateAndSave()">
+                        <i class="bi bi-file-earmark-pdf me-2"></i> Simpan Rekap & Download PDF
+                    </button>
+                </div>
+            </div>
 
+            <!-- ============================================= -->
+            <!-- TAB 4: LAPORAN (NEW)                          -->
+            <!-- ============================================= -->
+            <div class="tab-pane fade" id="report-pane" role="tabpanel">
                 <div class="card-pro">
                     <div class="card-header-pro">
-                        <span><i class="bi bi-cart me-2"></i> Rincian Barang</span>
-                        <button type="button" class="btn btn-sm btn-primary no-print" onclick="addRow()">
-                            <i class="bi bi-plus-circle"></i> Tambah
-                        </button>
+                        <span><i class="bi bi-journal-text me-2"></i> Riwayat Transaksi (Invoice & SO)</span>
+                        <button class="btn btn-sm btn-secondary" onclick="loadReports()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                     </div>
                     <div class="card-body-pro">
                         <div class="table-responsive">
-                            <table class="table-pro">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 20%;">SKU</th>
-                                        <th style="width: 30%;">Deskripsi</th>
-                                        <th style="width: 10%;">Qty</th>
-                                        <th style="width: 20%;">Harga (@)</th>
-                                        <th style="width: 20%;">Total</th>
-                                        <th style="width: 30px;" class="no-print"></th>
+                            <!-- TABEL LAPORAN DIPERBARUI DENGAN TFOOT & STATUS -->
+                            <table class="table table-hover align-middle table-bordered" style="font-size: 0.85rem;">
+                                <thead class="table-light">
+                                    <tr class="text-center">
+                                        <th>Tanggal</th>
+                                        <th>No Invoice</th>
+                                        <th>No SO</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th class="table-primary">Total MKI</th>
+                                        <th class="table-info">Total Customer</th>
+                                        <th class="table-secondary">PPN 11%</th>
+                                        <th class="table-success">Margin</th>
+                                        <th class="table-danger">Aksi</th> <!-- Tambah kolom Aksi -->
                                     </tr>
                                 </thead>
-                                <tbody id="transactionBody"></tbody>
+                                <tbody id="reportTableBody">
+                                    <tr><td colspan="10" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
+                                </tbody>
+                                <tfoot id="reportTableFoot"></tfoot>
                             </table>
                         </div>
-                        <div class="d-flex justify-content-end align-items-center mt-3 pt-3 border-top">
-                            <div class="text-muted me-3 fw-medium">Grand Total:</div>
-                            <div id="grandTotal" class="fw-bold fs-4 text-primary">Rp 0</div>
-                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="mb-5">
-                <button type="button" class="btn btn-main" onclick="generateAndSave()">
-                    <i class="bi bi-file-earmark-pdf me-2"></i> Simpan Rekap & Download PDF
-                </button>
-            </div>
-        </div>
 
-        <!-- ============================================= -->
-        <!-- TAB 4: LAPORAN (NEW)                          -->
-        <!-- ============================================= -->
-        <div class="tab-pane fade" id="report-pane" role="tabpanel">
-            <div class="card-pro">
-                <div class="card-header-pro">
-                    <span><i class="bi bi-journal-text me-2"></i> Riwayat Transaksi (Invoice & SO)</span>
-                    <button class="btn btn-sm btn-secondary" onclick="loadReports()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-                </div>
-                <div class="card-body-pro">
-                    <div class="table-responsive">
-                        <!-- TABEL LAPORAN DIPERBARUI DENGAN TFOOT & STATUS -->
-                        <table class="table table-hover align-middle table-bordered" style="font-size: 0.85rem;">
-                            <thead class="table-light">
-                                <tr class="text-center">
-                                    <th>Tanggal</th>
-                                    <th>No Invoice</th>
-                                    <th>No SO</th>
-                                    <th>Customer</th>
-                                    <th>Status</th>
-                                    <th class="table-primary">Total MKI</th>
-                                    <th class="table-info">Total Customer</th>
-                                    <th class="table-secondary">PPN 11%</th>
-                                    <th class="table-success">Margin</th>
-                                    <th class="table-danger">Aksi</th> <!-- Tambah kolom Aksi -->
-                                </tr>
-                            </thead>
-                            <tbody id="reportTableBody">
-                                <tr><td colspan="10" class="text-center py-4 text-muted">Memuat data laporan...</td></tr>
-                            </tbody>
-                            <tfoot id="reportTableFoot"></tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
-
     </div>
-</div>
+</div> <!-- END MAIN APP CONTENT -->
 
 <!-- ============================================= -->
 <!-- HIDDEN PDF TEMPLATE (SESUAI REQUEST)          -->
@@ -871,7 +893,7 @@
         });
 
         if (password) {
-            if (password === 'admin123') {
+            if (password === 'kawan123') {
                 const result = await Swal.fire({
                     title: 'Yakin hapus permanen?',
                     text: "Data tidak bisa dikembalikan!",
@@ -1279,22 +1301,27 @@
         document.getElementById('docDate').valueAsDate = new Date();
         document.getElementById('dueDate').valueAsDate = new Date(new Date().setDate(new Date().getDate() + 14));
         addRow(); 
-        // loadLogoDefault(); // REMOVED: Now handled by Firebase listener
         
+        // CHECK LOGIN STATE GLOBALLY
         if(sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-            document.getElementById('masterLoginPanel').style.display = 'none';
-            document.getElementById('masterDataContent').style.display = 'block';
+            document.getElementById('globalLoginPanel').style.display = 'none';
+            document.getElementById('mainAppContent').style.display = 'block';
+        } else {
+            document.getElementById('globalLoginPanel').style.display = 'flex';
+            document.getElementById('mainAppContent').style.display = 'none';
         }
     });
 
-    // --- FITUR LOGIN ADMIN ---
+    // --- FITUR GLOBAL LOGIN ADMIN ---
     function checkAdminLogin() {
         const u = document.getElementById('inputUser').value;
         const p = document.getElementById('inputPass').value;
         
         if (u === 'admin' && p === 'admin123') {
-            document.getElementById('masterLoginPanel').style.display = 'none';
-            document.getElementById('masterDataContent').style.display = 'block';
+            // Hide Login Panel, Show Main App
+            document.getElementById('globalLoginPanel').style.display = 'none';
+            document.getElementById('mainAppContent').style.display = 'block';
+            
             sessionStorage.setItem('isAdminLoggedIn', 'true');
             Swal.fire({ icon: 'success', title: 'Login Berhasil', timer: 1500, showConfirmButton: false });
         } else {
@@ -1304,8 +1331,11 @@
 
     function logoutAdmin() {
         sessionStorage.removeItem('isAdminLoggedIn');
-        document.getElementById('masterLoginPanel').style.display = 'flex';
-        document.getElementById('masterDataContent').style.display = 'none';
+        
+        // Hide Main App, Show Login Panel
+        document.getElementById('mainAppContent').style.display = 'none';
+        document.getElementById('globalLoginPanel').style.display = 'flex';
+        
         document.getElementById('inputUser').value = '';
         document.getElementById('inputPass').value = '';
     }
